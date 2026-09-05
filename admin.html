@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Taxi Tycoon v2.2.0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body class="admin-body">
+  <div class="bg-effects"><div class="bg-grid"></div></div>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">⚙️</div>
+          <span>Admin Panel</span>
+        </div>
+        <div class="admin-badge">★ ADMIN</div>
+      </div>
+
+      <nav class="admin-nav">
+        <div class="admin-nav-label">Tổng quan</div>
+        <div class="admin-nav-item active" data-panel="overview">
+          <span class="nav-icon">📊</span> Dashboard
+        </div>
+        <div class="admin-nav-item" data-panel="economy">
+          <span class="nav-icon">💰</span> Kinh tế
+        </div>
+
+        <div class="admin-nav-label">Người dùng</div>
+        <div class="admin-nav-item" data-panel="users">
+          <span class="nav-icon">👥</span> Người chơi
+          <span class="nav-count" id="nav-count-users">0</span>
+        </div>
+        <div class="admin-nav-item" data-panel="leaderboard">
+          <span class="nav-icon">🥇</span> Xếp hạng
+        </div>
+
+        <div class="admin-nav-label">Hệ thống</div>
+        <div class="admin-nav-item" data-panel="config">
+          <span class="nav-icon">⚙️</span> Cấu hình
+        </div>
+        <div class="admin-nav-item" data-panel="logs">
+          <span class="nav-icon">📋</span> Hướng dẫn
+        </div>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        <button class="btn btn-ghost btn-block btn-sm" id="btn-back-game" style="margin-bottom:8px">← Về game</button>
+        <button class="btn btn-danger btn-block btn-sm" id="btn-admin-logout">Đăng xuất</button>
+        <div style="text-align:center;margin-top:12px;font-size:0.7rem;color:var(--text-dim)">
+          <div id="admin-user">—</div>
+          <div id="admin-version">v2.2.0</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="admin-content">
+      <!-- OVERVIEW -->
+      <section class="admin-panel active" id="admin-panel-overview">
+        <div class="admin-header">
+          <div>
+            <h1>Dashboard</h1>
+            <div class="sub">Tổng quan hệ thống Taxi Tycoon realtime</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btn-refresh-all">🔄 Làm mới</button>
+        </div>
+
+        <div class="stat-cards" id="overview-stats">
+          <div class="stat-card">
+            <div class="icon-row"><div class="stat-icon">👥</div></div>
+            <div class="num" id="stat-users">—</div>
+            <div class="lbl">Tổng tài khoản</div>
+          </div>
+          <div class="stat-card">
+            <div class="icon-row"><div class="stat-icon">🎮</div></div>
+            <div class="num" id="stat-players">—</div>
+            <div class="lbl">Đã chơi game</div>
+          </div>
+          <div class="stat-card">
+            <div class="icon-row"><div class="stat-icon">👑</div></div>
+            <div class="num" id="stat-admins">—</div>
+            <div class="lbl">Admin</div>
+          </div>
+          <div class="stat-card">
+            <div class="icon-row"><div class="stat-icon">💰</div></div>
+            <div class="num" id="stat-economy" style="color:#34d399">—</div>
+            <div class="lbl">Tổng tiền economy</div>
+          </div>
+          <div class="stat-card">
+            <div class="icon-row"><div class="stat-icon">🚕</div></div>
+            <div class="num" id="stat-rides" style="color:var(--primary)">—</div>
+            <div class="lbl">Tổng chuyến xe</div>
+          </div>
+          <div class="stat-card">
+            <div class="icon-row"><div class="stat-icon">🚗</div></div>
+            <div class="num" id="stat-fleet">—</div>
+            <div class="lbl">Tổng đội xe</div>
+          </div>
+        </div>
+
+        <div class="admin-grid-2">
+          <div class="card">
+            <div class="card-title">🥇 Top 5 giàu nhất</div>
+            <div id="overview-top5" class="activity-list" style="margin-top:12px"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">🕐 Hoạt động gần đây</div>
+            <div id="overview-recent" class="activity-list" style="margin-top:12px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ECONOMY -->
+      <section class="admin-panel" id="admin-panel-economy">
+        <div class="admin-header">
+          <div>
+            <h1>Kinh tế server</h1>
+            <div class="sub">Phân tích tiền &amp; tiến độ người chơi</div>
+          </div>
+        </div>
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="num" id="eco-avg-money" style="color:#34d399">—</div>
+            <div class="lbl">TB tiền / người</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="eco-avg-level">—</div>
+            <div class="lbl">TB cấp độ</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="eco-avg-rides" style="color:var(--primary)">—</div>
+            <div class="lbl">TB chuyến / người</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="eco-max-money" style="color:#fbbf24">—</div>
+            <div class="lbl">Giàu nhất</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Phân bố tiền (Top 10)</div>
+          <div class="bar-list" id="eco-bars" style="margin-top:14px"></div>
+        </div>
+      </section>
+
+      <!-- USERS -->
+      <section class="admin-panel" id="admin-panel-users">
+        <div class="admin-header">
+          <div>
+            <h1>Quản lý người chơi</h1>
+            <div class="sub">Xem chi tiết, đổi role, reset game</div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="user-search" placeholder="Tìm email, tên, UID..." />
+          </div>
+          <select id="user-filter-role">
+            <option value="all">Tất cả role</option>
+            <option value="admin">Admin</option>
+            <option value="player">Player</option>
+          </select>
+          <select id="user-sort">
+            <option value="lastLogin">Mới đăng nhập</option>
+            <option value="money">Tiền nhiều nhất</option>
+            <option value="name">Tên A→Z</option>
+            <option value="day">Ngày chơi</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="btn-refresh-users">🔄</button>
+        </div>
+
+        <div class="quick-strip" id="users-quick"></div>
+
+        <div class="admin-table-wrap">
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Người chơi</th>
+                  <th>Role</th>
+                  <th>Tiền</th>
+                  <th>Cấp</th>
+                  <th>Ngày</th>
+                  <th>Chuyến</th>
+                  <th>Xe</th>
+                  <th>Last login</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <span id="users-page-info">0 người chơi</span>
+            <div class="pages" id="users-pages"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LEADERBOARD -->
+      <section class="admin-panel" id="admin-panel-leaderboard">
+        <div class="admin-header">
+          <div>
+            <h1>Bảng xếp hạng</h1>
+            <div class="sub">Toàn bộ server — sắp xếp theo tiền</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btn-refresh-lb">🔄 Làm mới</button>
+        </div>
+        <div id="admin-lb-list"></div>
+      </section>
+
+      <!-- CONFIG -->
+      <section class="admin-panel" id="admin-panel-config">
+        <div class="admin-header">
+          <div>
+            <h1>Cấu hình hệ thống</h1>
+            <div class="sub">Thông báo &amp; chế độ bảo trì</div>
+          </div>
+        </div>
+        <div class="card config-form">
+          <div class="form-group">
+            <label>Thông báo (MOTD)</label>
+            <textarea id="cfg-motd" placeholder="Thông báo hiển thị cho người chơi khi vào game..."></textarea>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <span>Chế độ bảo trì</span>
+              <div class="hint">Bật để tạm khóa game (cần code game hỗ trợ)</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="cfg-maintenance" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Ghi chú nội bộ (chỉ admin thấy)</label>
+            <input type="text" id="cfg-notes" placeholder="Ghi chú..." />
+          </div>
+          <button class="btn btn-primary" id="cfg-save">💾 Lưu cấu hình</button>
+        </div>
+      </section>
+
+      <!-- LOGS / GUIDE -->
+      <section class="admin-panel" id="admin-panel-logs">
+        <div class="admin-header">
+          <div>
+            <h1>Hướng dẫn Admin</h1>
+            <div class="sub">Cách vận hành hệ thống</div>
+          </div>
+        </div>
+        <div class="card" style="line-height:1.75;font-size:0.92rem;color:var(--text-muted)">
+          <div class="card-title" style="color:var(--text);margin-bottom:12px">Tạo tài khoản người chơi</div>
+          <p>1. Firebase Console → <strong>Authentication → Users → Add user</strong></p>
+          <p>2. Nhập email + mật khẩu → user đăng nhập game</p>
+          <p>3. Profile tự tạo với <code>role: player</code></p>
+          <hr style="border:none;border-top:1px solid var(--card-border);margin:16px 0">
+          <div class="card-title" style="color:var(--text);margin-bottom:12px">Cấp quyền Admin</div>
+          <p>Realtime Database → <code>users / {uid} / profile / role</code> = <strong>"admin"</strong></p>
+          <p>Hoặc dùng nút <strong>→ Admin</strong> trong tab Người chơi (khi đã là admin).</p>
+          <hr style="border:none;border-top:1px solid var(--card-border);margin:16px 0">
+          <div class="card-title" style="color:var(--text);margin-bottom:12px">Firebase Rules</div>
+          <p>Xem file <code>README.md</code> trong project để copy rules đầy đủ.</p>
+          <p>Lỗi <em>Permission denied</em> = rules chưa publish hoặc chưa set role admin.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Player detail drawer -->
+  <div class="drawer-overlay" id="drawer-overlay">
+    <div class="drawer" id="drawer">
+      <div class="drawer-header">
+        <h2 id="drawer-title">Chi tiết</h2>
+        <button class="btn-icon" id="drawer-close" style="width:36px;height:36px">✕</button>
+      </div>
+      <div id="drawer-body"></div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

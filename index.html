@@ -1,0 +1,3112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚕 Taxi Empire Tycoon</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: rgba(17, 24, 39, 0.8);
+  --bg-glass: rgba(255, 255, 255, 0.03);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --accent: #f59e0b;
+  --accent-light: #fbbf24;
+  --accent-dark: #d97706;
+  --accent-glow: rgba(245, 158, 11, 0.3);
+  --green: #10b981;
+  --green-glow: rgba(16, 185, 129, 0.3);
+  --red: #ef4444;
+  --red-glow: rgba(239, 68, 68, 0.3);
+  --blue: #3b82f6;
+  --blue-glow: rgba(59, 130, 246, 0.3);
+  --purple: #8b5cf6;
+  --purple-glow: rgba(139, 92, 246, 0.3);
+  --cyan: #06b6d4;
+  --pink: #ec4899;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --sidebar-width: 260px;
+  --header-height: 65px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* === LOADING SCREEN === */
+#loading-screen {
+  position: fixed; inset: 0; z-index: 10000;
+  background: var(--bg-primary);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: opacity 0.8s, visibility 0.8s;
+}
+#loading-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+#loading-screen .logo-anim {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 3rem; font-weight: 900;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light), #fff, var(--accent));
+  background-size: 300% 300%;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  animation: gradientShift 2s ease infinite;
+  margin-bottom: 2rem;
+}
+.loading-bar-container {
+  width: 300px; height: 4px;
+  background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;
+}
+.loading-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  border-radius: 2px;
+  animation: loadBar 2s ease-in-out forwards;
+}
+@keyframes loadBar { to { width: 100%; } }
+@keyframes gradientShift {
+  0%,100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+#loading-screen .tagline {
+  color: var(--text-secondary); margin-top: 1rem;
+  font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase;
+}
+
+/* === START SCREEN === */
+#start-screen {
+  position: fixed; inset: 0; z-index: 9000;
+  background: var(--bg-primary);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow: hidden;
+}
+#start-screen.active { display: flex; }
+.start-bg-particles { position: absolute; inset: 0; overflow: hidden; }
+.particle {
+  position: absolute; border-radius: 50%;
+  background: var(--accent); opacity: 0.1;
+  animation: floatParticle 15s infinite linear;
+}
+@keyframes floatParticle {
+  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.15; }
+  90% { opacity: 0.15; }
+  100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+}
+.start-content { position: relative; z-index: 2; text-align: center; }
+.start-logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 4rem; font-weight: 900; line-height: 1.1;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 60px var(--accent-glow);
+  margin-bottom: 0.5rem;
+}
+.start-logo .taxi-icon { font-size: 5rem; display: block; margin-bottom: 1rem; -webkit-text-fill-color: initial; }
+.start-subtitle { color: var(--text-secondary); font-size: 1.1rem; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 3rem; }
+.start-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.btn-start {
+  padding: 1rem 3rem; font-size: 1.1rem; font-weight: 700;
+  border: none; border-radius: 12px; cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px;
+}
+.btn-start.primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #000; box-shadow: 0 0 30px var(--accent-glow);
+}
+.btn-start.primary:hover { transform: translateY(-3px); box-shadow: 0 0 50px var(--accent-glow); }
+.btn-start.secondary {
+  background: var(--bg-glass); color: var(--text-primary);
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(10px);
+}
+.btn-start.secondary:hover { background: rgba(255,255,255,0.08); transform: translateY(-3px); }
+
+/* === MAIN LAYOUT === */
+#game-container { display: none; height: 100vh; width: 100vw; }
+#game-container.active { display: flex; }
+
+/* === SIDEBAR === */
+.sidebar {
+  width: var(--sidebar-width); height: 100vh;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-glass);
+  display: flex; flex-direction: column;
+  flex-shrink: 0; z-index: 100;
+  transition: transform 0.3s;
+}
+.sidebar-header {
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid var(--border-glass);
+  display: flex; align-items: center; gap: 0.8rem;
+}
+.sidebar-logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.2rem; font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.sidebar-logo-icon { font-size: 1.5rem; }
+.sidebar-nav { flex: 1; padding: 0.8rem; overflow-y: auto; }
+.nav-section-title {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px;
+  color: var(--text-muted); padding: 1rem 0.8rem 0.4rem;
+  font-weight: 600;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 0.8rem;
+  padding: 0.7rem 1rem; border-radius: 10px;
+  cursor: pointer; transition: all 0.2s;
+  color: var(--text-secondary); font-size: 0.88rem;
+  margin-bottom: 2px; position: relative;
+}
+.nav-item:hover { background: var(--bg-glass); color: var(--text-primary); }
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+  color: var(--accent-light);
+  border: 1px solid rgba(245,158,11,0.2);
+}
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 60%; background: var(--accent); border-radius: 0 3px 3px 0;
+}
+.nav-item i { width: 20px; text-align: center; font-size: 0.95rem; }
+.nav-badge {
+  margin-left: auto; background: var(--red);
+  color: #fff; font-size: 0.65rem; padding: 2px 6px;
+  border-radius: 10px; font-weight: 700;
+}
+.sidebar-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-glass);
+}
+.company-level {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-size: 0.8rem; color: var(--text-secondary);
+}
+.level-badge {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #000; font-weight: 800; font-size: 0.7rem;
+  padding: 3px 8px; border-radius: 6px;
+  font-family: 'Orbitron', sans-serif;
+}
+.xp-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden; }
+.xp-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); border-radius: 2px; transition: width 0.5s; }
+
+/* === MAIN AREA === */
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* === HEADER === */
+.header {
+  height: var(--header-height); padding: 0 1.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border-glass);
+  background: rgba(17,24,39,0.5);
+  backdrop-filter: blur(20px);
+  flex-shrink: 0;
+}
+.header-left { display: flex; align-items: center; gap: 1rem; }
+.header-title {
+  font-size: 1.3rem; font-weight: 700;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.header-stats { display: flex; gap: 1.5rem; align-items: center; }
+.stat-pill {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.4rem 1rem; border-radius: 20px;
+  background: var(--bg-glass); border: 1px solid var(--border-glass);
+  font-size: 0.85rem; font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+.stat-pill i { font-size: 0.8rem; }
+.stat-pill.money { color: var(--green); }
+.stat-pill.rep { color: var(--accent); }
+.stat-pill.day { color: var(--blue); }
+.header-actions { display: flex; gap: 0.5rem; align-items: center; }
+.header-btn {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--bg-glass); border: 1px solid var(--border-glass);
+  color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; font-size: 0.9rem;
+}
+.header-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.speed-control {
+  display: flex; align-items: center; gap: 0.3rem;
+  background: var(--bg-glass); border: 1px solid var(--border-glass);
+  border-radius: 10px; padding: 3px;
+}
+.speed-btn {
+  padding: 0.3rem 0.6rem; border-radius: 8px;
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  font-size: 0.75rem; font-weight: 600;
+  transition: all 0.2s;
+}
+.speed-btn.active { background: var(--accent); color: #000; }
+
+/* === CONTENT AREA === */
+.content { flex: 1; overflow-y: auto; padding: 1.5rem; }
+.page { display: none; animation: fadeIn 0.3s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* === CARDS === */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s;
+}
+.card:hover { border-color: rgba(255,255,255,0.12); }
+.card-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 1.2rem;
+}
+.card-title { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+.card-title i { color: var(--accent); }
+
+/* === GRID LAYOUTS === */
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; margin-bottom: 1.5rem; }
+
+/* === STAT CARDS === */
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 1.3rem;
+  backdrop-filter: blur(10px);
+  position: relative; overflow: hidden;
+}
+.stat-card::after {
+  content: ''; position: absolute; top: 0; right: 0;
+  width: 80px; height: 80px; border-radius: 50%;
+  filter: blur(30px); opacity: 0.15;
+}
+.stat-card.money::after { background: var(--green); }
+.stat-card.trips::after { background: var(--blue); }
+.stat-card.fleet::after { background: var(--accent); }
+.stat-card.rating::after { background: var(--purple); }
+.stat-icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; margin-bottom: 0.8rem;
+}
+.stat-card.money .stat-icon { background: rgba(16,185,129,0.15); color: var(--green); }
+.stat-card.trips .stat-icon { background: rgba(59,130,246,0.15); color: var(--blue); }
+.stat-card.fleet .stat-icon { background: rgba(245,158,11,0.15); color: var(--accent); }
+.stat-card.rating .stat-icon { background: rgba(139,92,246,0.15); color: var(--purple); }
+.stat-value { font-size: 1.8rem; font-weight: 800; font-family: 'Orbitron', sans-serif; }
+.stat-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.3rem; text-transform: uppercase; letter-spacing: 1px; }
+.stat-change { font-size: 0.75rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.3rem; }
+.stat-change.up { color: var(--green); }
+.stat-change.down { color: var(--red); }
+
+/* === BUTTONS === */
+.btn {
+  padding: 0.6rem 1.2rem; border-radius: 10px;
+  border: none; cursor: pointer; font-family: 'Inter',sans-serif;
+  font-weight: 600; font-size: 0.82rem;
+  transition: all 0.2s; display: inline-flex;
+  align-items: center; gap: 0.4rem;
+}
+.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: #000; }
+.btn-primary:hover { box-shadow: 0 0 20px var(--accent-glow); transform: translateY(-1px); }
+.btn-success { background: linear-gradient(135deg, var(--green), #059669); color: #fff; }
+.btn-danger { background: linear-gradient(135deg, var(--red), #dc2626); color: #fff; }
+.btn-ghost {
+  background: var(--bg-glass); color: var(--text-secondary);
+  border: 1px solid var(--border-glass);
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.btn-sm { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+/* === TABLES === */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  padding: 0.8rem 1rem; text-align: left;
+  font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--text-muted);
+  border-bottom: 1px solid var(--border-glass);
+  font-weight: 600;
+}
+.data-table td {
+  padding: 0.8rem 1rem; font-size: 0.85rem;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  vertical-align: middle;
+}
+.data-table tr:hover td { background: var(--bg-glass); }
+
+/* === PROGRESS BAR === */
+.progress { height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+.progress-fill.green { background: linear-gradient(90deg, var(--green), #34d399); }
+.progress-fill.blue { background: linear-gradient(90deg, var(--blue), #60a5fa); }
+.progress-fill.accent { background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
+.progress-fill.red { background: linear-gradient(90deg, var(--red), #f87171); }
+.progress-fill.purple { background: linear-gradient(90deg, var(--purple), #a78bfa); }
+
+/* === TAGS === */
+.tag {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.2rem 0.6rem; border-radius: 6px;
+  font-size: 0.7rem; font-weight: 600;
+}
+.tag.green { background: rgba(16,185,129,0.15); color: var(--green); }
+.tag.red { background: rgba(239,68,68,0.15); color: var(--red); }
+.tag.blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+.tag.accent { background: rgba(245,158,11,0.15); color: var(--accent); }
+.tag.purple { background: rgba(139,92,246,0.15); color: var(--purple); }
+.tag.cyan { background: rgba(6,182,212,0.15); color: var(--cyan); }
+
+/* === VEHICLE CARDS === */
+.vehicle-card {
+  background: var(--bg-card); border: 1px solid var(--border-glass);
+  border-radius: 16px; padding: 1.5rem; transition: all 0.3s;
+  position: relative; overflow: hidden;
+}
+.vehicle-card:hover { border-color: rgba(245,158,11,0.3); transform: translateY(-3px); box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+.vehicle-emoji { font-size: 3rem; margin-bottom: 0.8rem; }
+.vehicle-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem; }
+.vehicle-type { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem; }
+.vehicle-stats { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+.vehicle-stat {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.8rem;
+}
+.vehicle-stat-label { color: var(--text-secondary); }
+.vehicle-stat-value { font-weight: 600; }
+.vehicle-price { font-family: 'Orbitron',sans-serif; font-weight: 700; color: var(--green); font-size: 1.1rem; margin-bottom: 1rem; }
+
+/* === DRIVER CARDS === */
+.driver-card {
+  background: var(--bg-card); border: 1px solid var(--border-glass);
+  border-radius: 16px; padding: 1.3rem; transition: all 0.3s;
+}
+.driver-card:hover { border-color: rgba(59,130,246,0.3); }
+.driver-avatar {
+  width: 50px; height: 50px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; margin-bottom: 0.8rem;
+  background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2));
+}
+.driver-name { font-weight: 700; font-size: 0.95rem; }
+.driver-role { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.8rem; }
+.driver-skills { display: flex; flex-direction: column; gap: 0.4rem; }
+.skill-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; }
+.skill-row span:first-child { width: 70px; color: var(--text-secondary); }
+.skill-row .progress { flex: 1; height: 6px; }
+
+/* === CITY MAP === */
+.city-map-container {
+  background: var(--bg-card); border: 1px solid var(--border-glass);
+  border-radius: 16px; overflow: hidden; position: relative;
+  height: 500px;
+}
+.city-map {
+  width: 100%; height: 100%; position: relative;
+  background: linear-gradient(135deg, #0c1220, #111d35);
+}
+.map-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.map-zone {
+  position: absolute; border-radius: 12px;
+  border: 2px dashed; padding: 0.8rem;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.3s;
+  text-align: center;
+}
+.map-zone:hover { transform: scale(1.05); }
+.map-zone .zone-name { font-size: 0.75rem; font-weight: 700; }
+.map-zone .zone-demand { font-size: 0.65rem; margin-top: 0.3rem; }
+.map-taxi {
+  position: absolute; font-size: 1.2rem;
+  transition: all 2s ease-in-out;
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+  cursor: pointer;
+}
+.map-overlay {
+  position: absolute; bottom: 1rem; left: 1rem;
+  display: flex; gap: 0.5rem; flex-wrap: wrap;
+}
+.map-legend {
+  display: flex; align-items: center; gap: 0.3rem;
+  padding: 0.3rem 0.6rem; border-radius: 8px;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+  font-size: 0.7rem; color: var(--text-secondary);
+}
+.map-legend .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* === CHARTS === */
+.mini-chart {
+  height: 120px; display: flex; align-items: flex-end;
+  gap: 3px; padding-top: 1rem;
+}
+.chart-bar {
+  flex: 1; background: linear-gradient(to top, var(--accent), var(--accent-light));
+  border-radius: 3px 3px 0 0; transition: height 0.5s;
+  min-width: 8px; opacity: 0.7; position: relative;
+}
+.chart-bar:hover { opacity: 1; }
+.chart-bar::after {
+  content: attr(data-value); position: absolute;
+  top: -18px; left: 50%; transform: translateX(-50%);
+  font-size: 0.6rem; color: var(--text-secondary);
+  white-space: nowrap; display: none;
+}
+.chart-bar:hover::after { display: block; }
+
+/* === NOTIFICATIONS === */
+.notification-panel {
+  position: fixed; top: var(--header-height); right: -380px;
+  width: 380px; height: calc(100vh - var(--header-height));
+  background: var(--bg-secondary); border-left: 1px solid var(--border-glass);
+  z-index: 200; transition: right 0.3s;
+  display: flex; flex-direction: column;
+}
+.notification-panel.open { right: 0; }
+.notification-panel-header {
+  padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border-glass);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.notification-list { flex: 1; overflow-y: auto; padding: 0.8rem; }
+.notification-item {
+  padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem;
+  background: var(--bg-glass); border: 1px solid var(--border-glass);
+  cursor: pointer; transition: all 0.2s;
+}
+.notification-item:hover { background: rgba(255,255,255,0.05); }
+.notification-item .notif-icon { font-size: 1.2rem; margin-bottom: 0.5rem; }
+.notification-item .notif-title { font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem; }
+.notification-item .notif-text { font-size: 0.78rem; color: var(--text-secondary); }
+.notification-item .notif-time { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.5rem; }
+
+/* === EVENT MODAL === */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--bg-secondary); border: 1px solid var(--border-glass);
+  border-radius: 20px; padding: 2rem; max-width: 500px; width: 90%;
+  animation: modalIn 0.3s ease;
+  max-height: 80vh; overflow-y: auto;
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(0.9) translateY(20px); } }
+.modal-emoji { font-size: 3rem; text-align: center; margin-bottom: 1rem; }
+.modal h2 { text-align: center; margin-bottom: 0.5rem; font-size: 1.3rem; }
+.modal .modal-desc { text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; }
+.modal-actions { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+.modal-actions .btn { min-width: 120px; justify-content: center; }
+
+/* === RESEARCH TREE === */
+.research-node {
+  background: var(--bg-card); border: 1px solid var(--border-glass);
+  border-radius: 16px; padding: 1.3rem; text-align: center;
+  transition: all 0.3s; position: relative;
+}
+.research-node.locked { opacity: 0.4; }
+.research-node.unlocked { border-color: rgba(16,185,129,0.3); }
+.research-node.available { border-color: rgba(245,158,11,0.3); cursor: pointer; }
+.research-node.available:hover { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); transform: translateY(-3px); }
+.research-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.research-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.3rem; }
+.research-desc { font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.8rem; }
+.research-cost { font-family: 'Orbitron',sans-serif; font-size: 0.8rem; color: var(--accent); font-weight: 600; }
+
+/* === ACHIEVEMENT TOAST === */
+.achievement-toast {
+  position: fixed; top: 1rem; right: 1rem; z-index: 600;
+  background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(139,92,246,0.2));
+  border: 1px solid rgba(245,158,11,0.3); border-radius: 16px;
+  padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem;
+  backdrop-filter: blur(20px); transform: translateX(120%);
+  transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+.achievement-toast.show { transform: translateX(0); }
+.achievement-toast .ach-icon { font-size: 2rem; }
+.achievement-toast .ach-info .ach-label { font-size: 0.65rem; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
+.achievement-toast .ach-info .ach-name { font-weight: 700; font-size: 0.95rem; }
+
+/* === WEATHER WIDGET === */
+.weather-widget {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.3rem 0.8rem; border-radius: 10px;
+  background: var(--bg-glass); border: 1px solid var(--border-glass);
+  font-size: 0.82rem;
+}
+
+/* === MISSION CARD === */
+.mission-card {
+  background: var(--bg-card); border: 1px solid var(--border-glass);
+  border-radius: 16px; padding: 1.3rem; transition: all 0.3s;
+  position: relative; overflow: hidden;
+}
+.mission-card.active-mission { border-color: rgba(245,158,11,0.3); }
+.mission-card.completed { border-color: rgba(16,185,129,0.3); opacity: 0.7; }
+.mission-emoji { font-size: 2rem; margin-bottom: 0.5rem; }
+.mission-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.3rem; }
+.mission-desc { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0.8rem; }
+.mission-reward { display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--accent); font-weight: 600; }
+.mission-progress { margin-top: 0.8rem; }
+.mission-progress-text { font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.4rem; display: flex; justify-content: space-between; }
+
+/* === FINANCE CHART === */
+.finance-chart-area {
+  height: 200px; position: relative;
+  border-bottom: 1px solid var(--border-glass);
+  border-left: 1px solid var(--border-glass);
+  margin-top: 1rem;
+}
+.finance-line {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 100%;
+}
+
+/* === ANIMATIONS === */
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.animate-pulse { animation: pulse 2s infinite; }
+.animate-bounce { animation: bounce 1s infinite; }
+
+/* === RESPONSIVE === */
+@media (max-width: 1200px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .sidebar { position: fixed; left: 0; z-index: 300; transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .grid-4, .grid-3, .grid-2, .grid-2-1, .grid-1-2 { grid-template-columns: 1fr; }
+  .header-stats { display: none; }
+}
+
+/* === TOOLTIP === */
+.tooltip-container { position: relative; }
+.tooltip {
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%); padding: 0.5rem 0.8rem;
+  background: var(--bg-secondary); border: 1px solid var(--border-glass);
+  border-radius: 8px; font-size: 0.75rem; white-space: nowrap;
+  pointer-events: none; opacity: 0; transition: opacity 0.2s;
+  z-index: 100;
+}
+.tooltip-container:hover .tooltip { opacity: 1; }
+
+/* === EMPTY STATE === */
+.empty-state { text-align: center; padding: 3rem; color: var(--text-secondary); }
+.empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; }
+.empty-state p { font-size: 0.9rem; }
+
+/* === GARAGE === */
+.garage-slot {
+  background: var(--bg-card); border: 2px dashed var(--border-glass);
+  border-radius: 16px; padding: 1.5rem; text-align: center;
+  min-height: 200px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: all 0.3s;
+}
+.garage-slot.occupied { border-style: solid; }
+.garage-slot.empty { cursor: pointer; }
+.garage-slot.empty:hover { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.03); }
+.garage-vehicle-emoji { font-size: 3.5rem; margin-bottom: 0.5rem; }
+.condition-bar { display: flex; gap: 2px; margin: 0.5rem 0; }
+.condition-segment { width: 20px; height: 6px; border-radius: 3px; }
+
+/* === CONTRACT === */
+.contract-card {
+  background: var(--bg-card); border: 1px solid var(--border-glass);
+  border-radius: 16px; padding: 1.3rem; display: flex;
+  align-items: center; gap: 1rem; transition: all 0.3s;
+}
+.contract-card:hover { border-color: rgba(245,158,11,0.2); }
+.contract-icon { font-size: 2.5rem; }
+.contract-info { flex: 1; }
+.contract-name { font-weight: 700; font-size: 0.95rem; }
+.contract-details { font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.3rem; }
+.contract-payout { font-family: 'Orbitron',sans-serif; font-weight: 700; color: var(--green); }
+
+/* Day/Night indicator */
+.time-indicator {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.8rem;
+}
+.time-icon { font-size: 1.1rem; }
+
+/* === LOGIN SCREEN === */
+#login-screen {
+  position: fixed; inset: 0; z-index: 9500;
+  background: var(--bg-primary);
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+#login-screen.active { display: flex; }
+.login-box {
+  width: 100%; max-width: 400px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px; padding: 2.5rem 2rem;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.login-box h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.6rem; text-align: center; margin-bottom: 0.3rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.login-box .sub { text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.8rem; }
+.login-box label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.login-box input {
+  width: 100%; padding: 0.75rem 1rem; margin-bottom: 1rem;
+  border-radius: 10px; border: 1px solid var(--border-glass);
+  background: rgba(0,0,0,0.35); color: var(--text-primary);
+  font-family: inherit; font-size: 0.95rem; outline: none;
+}
+.login-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.login-error { color: var(--red); font-size: 0.85rem; text-align: center; min-height: 1.2em; margin-bottom: 0.5rem; }
+.login-box .btn-start { width: 100%; justify-content: center; display: flex; align-items: center; gap: 0.5rem; }
+.login-footer { text-align: center; margin-top: 1.2rem; font-size: 0.75rem; color: var(--text-muted); }
+.user-bar {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.8rem; color: var(--text-secondary);
+}
+.user-bar .ub-name { font-weight: 600; color: var(--text-primary); max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.game-toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: rgba(17,24,39,0.95); border: 1px solid rgba(245,158,11,0.4);
+  color: #f3f4f6; padding: 12px 22px; border-radius: 12px; z-index: 9999;
+  font-size: 0.9rem; font-weight: 600; opacity: 0; transition: all 0.3s;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4); pointer-events: none; max-width: 90%;
+}
+.game-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>🚕 TAXI EMPIRE</h1>
+    <div class="sub">Đăng nhập để chơi · Tài khoản do Admin tạo</div>
+    <form id="login-form" onsubmit="return handleLogin(event)">
+      <label>Email</label>
+      <input type="email" id="login-email" required placeholder="email@example.com" autocomplete="username">
+      <label>Mật khẩu</label>
+      <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
+      <div class="login-error" id="login-error"></div>
+      <button type="submit" class="btn-start primary" id="login-btn">Đăng nhập</button>
+    </form>
+    <div class="login-footer">Firebase Auth · v2.3.1<br>Không có đăng ký công khai</div>
+  </div>
+</div>
+
+<!-- LOADING SCREEN -->
+<div id="loading-screen">
+  <div class="logo-anim">TAXI EMPIRE</div>
+  <div class="loading-bar-container"><div class="loading-bar"></div></div>
+  <div class="tagline">Đang tải thế giới...</div>
+</div>
+
+<!-- START SCREEN -->
+<div id="start-screen">
+  <div class="start-bg-particles" id="particles"></div>
+  <div class="start-content">
+    <div class="start-logo">
+      <span class="taxi-icon">🚕</span>
+      TAXI EMPIRE<br>TYCOON
+    </div>
+    <div class="start-subtitle">Xây dựng đế chế taxi của bạn</div>
+    <div class="start-buttons">
+      <button class="btn-start primary" onclick="startNewGame()">
+        <i class="fas fa-play"></i> Chơi Mới
+      </button>
+      <button class="btn-start secondary" id="btn-continue" onclick="loadGame()" style="display:none">
+        <i class="fas fa-save"></i> Tiếp tục
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN GAME -->
+<div id="game-container">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-logo-icon">🚕</span>
+      <span class="sidebar-logo">TAXI EMPIRE</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Tổng quan</div>
+      <div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard')">
+        <i class="fas fa-chart-pie"></i> Bảng điều khiển
+      </div>
+      <div class="nav-item" data-page="city" onclick="switchPage('city')">
+        <i class="fas fa-map-marked-alt"></i> Bản đồ thành phố
+      </div>
+
+      <div class="nav-section-title">Quản lý</div>
+      <div class="nav-item" data-page="fleet" onclick="switchPage('fleet')">
+        <i class="fas fa-car-side"></i> Đội xe
+        <span class="nav-badge" id="fleet-badge" style="display:none">0</span>
+      </div>
+      <div class="nav-item" data-page="drivers" onclick="switchPage('drivers')">
+        <i class="fas fa-id-card"></i> Tài xế
+      </div>
+      <div class="nav-item" data-page="garage" onclick="switchPage('garage')">
+        <i class="fas fa-wrench"></i> Garage
+      </div>
+      <div class="nav-item" data-page="dispatch" onclick="switchPage('dispatch')">
+        <i class="fas fa-headset"></i> Điều phối
+      </div>
+
+      <div class="nav-section-title">Kinh doanh</div>
+      <div class="nav-item" data-page="finance" onclick="switchPage('finance')">
+        <i class="fas fa-chart-line"></i> Tài chính
+      </div>
+      <div class="nav-item" data-page="contracts" onclick="switchPage('contracts')">
+        <i class="fas fa-file-contract"></i> Hợp đồng
+      </div>
+      <div class="nav-item" data-page="missions" onclick="switchPage('missions')">
+        <i class="fas fa-bullseye"></i> Nhiệm vụ
+        <span class="nav-badge" id="mission-badge">3</span>
+      </div>
+
+      <div class="nav-section-title">Phát triển</div>
+      <div class="nav-item" data-page="research" onclick="switchPage('research')">
+        <i class="fas fa-flask"></i> Nghiên cứu
+      </div>
+      <div class="nav-item" data-page="marketing" onclick="switchPage('marketing')">
+        <i class="fas fa-bullhorn"></i> Marketing
+      </div>
+      <div class="nav-item" data-page="achievements" onclick="switchPage('achievements')">
+        <i class="fas fa-trophy"></i> Thành tựu
+      </div>
+      <div class="nav-item" data-page="settings" onclick="switchPage('settings')">
+        <i class="fas fa-cog"></i> Cài đặt
+      </div>
+      <div class="nav-item" id="admin-nav-link" style="display:none" onclick="location.href='admin.html'">
+        <i class="fas fa-shield-alt"></i> Admin Panel
+      </div>
+      <div class="nav-item" onclick="logoutUser()">
+        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="company-level">
+        <span class="level-badge" id="level-badge">LV 1</span>
+        <span id="company-name-display">Công ty mới</span>
+      </div>
+      <div class="user-bar" style="margin-top:0.5rem">
+        <i class="fas fa-user"></i>
+        <span class="ub-name" id="user-bar-name">Player</span>
+        <span style="margin-left:auto;font-size:0.65rem;color:var(--text-muted)">v2.3.1</span>
+      </div>
+      <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-area">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-left">
+        <button class="header-btn" onclick="toggleSidebar()" style="display:none" id="menu-btn">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="header-title" id="page-title">
+          <i class="fas fa-chart-pie"></i> Bảng điều khiển
+        </div>
+      </div>
+      <div class="header-stats">
+        <div class="stat-pill money"><i class="fas fa-coins"></i> <span id="header-money">$50,000</span></div>
+        <div class="stat-pill rep"><i class="fas fa-star"></i> <span id="header-rep">4.0</span></div>
+        <div class="weather-widget" id="weather-widget">
+          <span id="weather-icon">☀️</span>
+          <span id="weather-text">Nắng đẹp</span>
+        </div>
+        <div class="time-indicator">
+          <span class="time-icon" id="time-icon">🌅</span>
+          <span id="time-display">06:00</span>
+        </div>
+        <div class="stat-pill day"><i class="fas fa-calendar"></i> Ngày <span id="header-day">1</span></div>
+      </div>
+      <div class="header-actions">
+        <div class="speed-control">
+          <button class="speed-btn" onclick="setSpeed(0)" id="speed-0">⏸</button>
+          <button class="speed-btn active" onclick="setSpeed(1)" id="speed-1">▶</button>
+          <button class="speed-btn" onclick="setSpeed(2)" id="speed-2">▶▶</button>
+          <button class="speed-btn" onclick="setSpeed(3)" id="speed-3">▶▶▶</button>
+        </div>
+        <button class="header-btn" onclick="toggleNotifications()" id="notif-btn">
+          <i class="fas fa-bell"></i>
+        </button>
+        <button class="header-btn" onclick="saveGame()">
+          <i class="fas fa-save"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="content" id="content-area">
+
+      <!-- ===== DASHBOARD ===== -->
+      <div class="page active" id="page-dashboard">
+        <div id="dashboard-quick-actions" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;align-items:center"></div>
+        <div class="grid-4" id="dashboard-stats"></div>
+        <div class="grid-2-1">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fas fa-chart-area"></i> Doanh thu 7 ngày qua</div>
+            </div>
+            <div class="mini-chart" id="revenue-chart"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fas fa-bolt"></i> Hoạt động</div>
+            </div>
+            <div id="activity-feed" style="max-height:160px;overflow-y:auto"></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fas fa-car"></i> Đội xe tổng quan</div>
+            </div>
+            <div id="fleet-overview"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fas fa-users"></i> Tài xế hàng đầu</div>
+            </div>
+            <div id="top-drivers"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CITY MAP ===== -->
+      <div class="page" id="page-city">
+        <div class="city-map-container">
+          <div class="city-map" id="city-map">
+            <div class="map-grid"></div>
+            <div id="map-zones"></div>
+            <div id="map-taxis"></div>
+            <div class="map-overlay">
+              <div class="map-legend"><div class="dot" style="background:var(--green)"></div> Cao</div>
+              <div class="map-legend"><div class="dot" style="background:var(--accent)"></div> TB</div>
+              <div class="map-legend"><div class="dot" style="background:var(--red)"></div> Thấp</div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:1rem" id="zone-details"></div>
+      </div>
+
+      <!-- ===== FLEET ===== -->
+      <div class="page" id="page-fleet">
+        <div class="card" style="margin-bottom:1rem">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-shopping-cart"></i> Mua xe mới</div>
+          </div>
+          <div class="grid-4" id="vehicle-shop"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-warehouse"></i> Xe đang sở hữu (<span id="owned-count">0</span>)</div>
+          </div>
+          <div id="owned-vehicles"></div>
+        </div>
+      </div>
+
+      <!-- ===== DRIVERS ===== -->
+      <div class="page" id="page-drivers">
+        <div class="card" style="margin-bottom:1rem">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-user-plus"></i> Tuyển tài xế</div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="autoAssignAll()"><i class="fas fa-link"></i> Gán xe tự động</button>
+              <button class="btn btn-primary" onclick="refreshDriverPool()"><i class="fas fa-sync"></i> Làm mới ($500)</button>
+            </div>
+          </div>
+          <div class="grid-4" id="driver-pool"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-users"></i> Tài xế đã thuê (<span id="hired-count">0</span>)</div>
+          </div>
+          <div id="hired-drivers"></div>
+        </div>
+      </div>
+
+      <!-- ===== GARAGE ===== -->
+      <div class="page" id="page-garage">
+        <div class="card" style="margin-bottom:1rem">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-tools"></i> Garage - Bảo trì & Nâng cấp</div>
+            <div>
+              <span class="tag accent">Slot: <span id="garage-slots">5</span></span>
+            </div>
+          </div>
+          <div class="grid-3" id="garage-grid"></div>
+        </div>
+      </div>
+
+      <!-- ===== DISPATCH ===== -->
+      <div class="page" id="page-dispatch">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fas fa-route"></i> Yêu cầu hiện tại</div>
+            </div>
+            <div id="ride-requests" style="max-height:500px;overflow-y:auto"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fas fa-taxi"></i> Xe đang hoạt động</div>
+            </div>
+            <div id="active-rides" style="max-height:500px;overflow-y:auto"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== FINANCE ===== -->
+      <div class="page" id="page-finance">
+        <div class="grid-4" id="finance-stats"></div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fas fa-arrow-up" style="color:var(--green)"></i> Thu nhập</div>
+            </div>
+            <div id="income-breakdown"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fas fa-arrow-down" style="color:var(--red)"></i> Chi phí</div>
+            </div>
+            <div id="expense-breakdown"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:1rem">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-university"></i> Ngân hàng</div>
+          </div>
+          <div class="grid-3" id="bank-options"></div>
+        </div>
+      </div>
+
+      <!-- ===== CONTRACTS ===== -->
+      <div class="page" id="page-contracts">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-handshake"></i> Hợp đồng có sẵn</div>
+            <button class="btn btn-ghost btn-sm" onclick="refreshContracts()"><i class="fas fa-sync"></i> Làm mới</button>
+          </div>
+          <div id="contracts-list"></div>
+        </div>
+        <div class="card" style="margin-top:1rem">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-check-circle"></i> Hợp đồng đang thực hiện</div>
+          </div>
+          <div id="active-contracts"></div>
+        </div>
+      </div>
+
+      <!-- ===== MISSIONS ===== -->
+      <div class="page" id="page-missions">
+        <div class="grid-3" id="missions-grid"></div>
+      </div>
+
+      <!-- ===== RESEARCH ===== -->
+      <div class="page" id="page-research">
+        <div class="card" style="margin-bottom:1rem">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-atom"></i> Cây công nghệ</div>
+            <div>
+              <span class="tag purple"><i class="fas fa-flask"></i> Điểm NC: <span id="research-points">0</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="grid-4" id="research-tree"></div>
+      </div>
+
+      <!-- ===== MARKETING ===== -->
+      <div class="page" id="page-marketing">
+        <div class="card" style="margin-bottom:1rem">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-ad"></i> Chiến dịch Marketing</div>
+          </div>
+          <div class="grid-3" id="marketing-campaigns"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-chart-bar"></i> Hiệu quả Marketing</div>
+          </div>
+          <div id="marketing-stats"></div>
+        </div>
+      </div>
+
+      <!-- ===== ACHIEVEMENTS ===== -->
+      <div class="page" id="page-achievements">
+        <div class="grid-3" id="achievements-grid"></div>
+      </div>
+
+      <!-- ===== SETTINGS ===== -->
+      <div class="page" id="page-settings">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-cog"></i> Cài đặt trò chơi</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:1rem;max-width:400px">
+            <div>
+              <label style="font-size:0.85rem;color:var(--text-secondary);display:block;margin-bottom:0.4rem">Tên công ty</label>
+              <input type="text" id="company-name-input" value="Taxi Empire" style="width:100%;padding:0.6rem 1rem;border-radius:10px;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text-primary);font-family:'Inter',sans-serif;font-size:0.9rem" onchange="updateCompanyName()">
+            </div>
+            <div style="display:flex;gap:0.5rem">
+              <button class="btn btn-primary" onclick="saveGame()"><i class="fas fa-save"></i> Lưu game</button>
+              <button class="btn btn-danger" onclick="resetGame()"><i class="fas fa-trash"></i> Xóa dữ liệu</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION PANEL -->
+<div class="notification-panel" id="notif-panel">
+  <div class="notification-panel-header">
+    <span style="font-weight:700">Thông báo</span>
+    <button class="btn btn-ghost btn-sm" onclick="clearNotifications()">Xóa tất cả</button>
+  </div>
+  <div class="notification-list" id="notif-list"></div>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="event-modal">
+    <div class="modal-emoji" id="modal-emoji">🎉</div>
+    <h2 id="modal-title">Sự kiện</h2>
+    <p class="modal-desc" id="modal-desc">Mô tả sự kiện...</p>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- ACHIEVEMENT TOAST -->
+<div class="achievement-toast" id="ach-toast">
+  <span class="ach-icon" id="ach-toast-icon">🏆</span>
+  <div class="ach-info">
+    <div class="ach-label">Thành tựu mở khóa!</div>
+    <div class="ach-name" id="ach-toast-name">Achievement</div>
+  </div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
+<script>
+
+// === FIREBASE ===
+const firebaseConfig = {
+  apiKey: "AIzaSyAsEBynbRvfLo7gfh0Rt6KeKLkc-tpEQFA",
+  authDomain: "banhang-f7d5f.firebaseapp.com",
+  databaseURL: "https://banhang-f7d5f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "banhang-f7d5f",
+  storageBucket: "banhang-f7d5f.firebasestorage.app",
+  messagingSenderId: "617344459330",
+  appId: "1:617344459330:web:0adf0a8d95e9aef99443db"
+};
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+const fbDB = firebase.database();
+let currentUser = null;
+let userProfile = null;
+const APP_VERSION = "2.3.1";
+
+function storageKey() {
+  return currentUser ? "taxiEmpireSave_" + currentUser.uid : "taxiEmpireSave";
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  const err = document.getElementById("login-error");
+  const btn = document.getElementById("login-btn");
+  err.textContent = "";
+  btn.disabled = true;
+  btn.textContent = "Đang đăng nhập...";
+  try {
+    await fbAuth.signInWithEmailAndPassword(email, password);
+  } catch (ex) {
+    err.textContent = "Email hoặc mật khẩu không đúng";
+    btn.disabled = false;
+    btn.textContent = "Đăng nhập";
+  }
+  return false;
+}
+
+async function ensureProfile(user) {
+  const ref = fbDB.ref("users/" + user.uid + "/profile");
+  const snap = await ref.once("value");
+  if (snap.exists()) {
+    userProfile = snap.val();
+    await ref.update({ lastLogin: Date.now(), version: APP_VERSION });
+  } else {
+    userProfile = {
+      email: user.email,
+      displayName: user.email.split("@")[0],
+      role: "player",
+      createdAt: Date.now(),
+      lastLogin: Date.now(),
+      version: APP_VERSION
+    };
+    await ref.set(userProfile);
+  }
+  return userProfile;
+}
+
+async function saveGameCloud() {
+  if (!currentUser) return false;
+  try {
+    const clean = JSON.parse(JSON.stringify(G));
+    clean.savedAt = Date.now();
+    clean.version = APP_VERSION;
+    await fbDB.ref("users/" + currentUser.uid + "/game").set(clean);
+    await fbDB.ref("leaderboard/" + currentUser.uid).set({
+      name: userProfile?.displayName || currentUser.email.split("@")[0],
+      email: currentUser.email,
+      money: G.money || 0,
+      level: G.level || 1,
+      reputation: Math.floor(G.reputation || 0),
+      totalRides: G.totalTrips || 0,
+      totalIncome: G.stats?.totalIncome || 0,
+      fleetSize: (G.vehicles || []).length,
+      day: G.day || 1,
+      updatedAt: Date.now()
+    });
+    return true;
+  } catch (e) {
+    console.error("Cloud save failed", e);
+    return false;
+  }
+}
+
+async function loadGameCloud() {
+  if (!currentUser) return null;
+  try {
+    const snap = await fbDB.ref("users/" + currentUser.uid + "/game").once("value");
+    return snap.exists() ? snap.val() : null;
+  } catch (e) {
+    console.error("Cloud load failed", e);
+    return null;
+  }
+}
+
+function logoutUser() {
+  fbAuth.signOut().then(() => location.reload());
+}
+
+// ========================================================
+// TAXI EMPIRE TYCOON - COMPLETE GAME ENGINE
+// ========================================================
+
+// === GAME STATE ===
+let G = {
+  companyName: 'Taxi Empire',
+  money: 50000,
+  reputation: 4.0,
+  level: 1,
+  xp: 0,
+  xpNeeded: 100,
+  day: 1,
+  hour: 6,
+  minute: 0,
+  speed: 1,
+  totalTrips: 0,
+  totalEarnings: 0,
+  dailyEarnings: 0,
+  dailyExpenses: 0,
+  dailyTrips: 0,
+  revenueHistory: [0,0,0,0,0,0,0],
+  vehicles: [],
+  drivers: [],
+  driverPool: [],
+  activeRides: [],
+  rideRequests: [],
+  notifications: [],
+  research: {},
+  achievements: {},
+  contracts: [],
+  activeContracts: [],
+  missions: [],
+  loans: [],
+  marketingActive: {},
+  garageSlots: 5,
+  weather: 'sunny',
+  events: [],
+  stats: {
+    totalIncome: 0,
+    totalExpense: 0,
+    tripsToday: 0,
+    bestDay: 0,
+    customersServed: 0,
+    fuelSpent: 0,
+    maintenanceCost: 0,
+    driverPayments: 0,
+    marketingSpent: 0,
+    researchPoints: 0,
+  },
+  lastDailyBonus: null,
+  dailyBonusStreak: 0,
+  soundOn: true,
+  totalPlayDays: 0,
+  insurance: false,
+};
+
+// === DATA DEFINITIONS ===
+const VEHICLE_TYPES = [
+  { id:'sedan', name:'Sedan Cơ Bản', emoji:'🚗', type:'Sedan', price:15000, capacity:4, speed:60, fuelCost:5, comfort:50, earn:8, maintenance:3, description:'Xe phổ thông, chi phí thấp' },
+  { id:'suv', name:'SUV Premium', emoji:'🚙', type:'SUV', price:30000, capacity:6, speed:55, fuelCost:8, comfort:70, earn:14, maintenance:5, description:'Rộng rãi, thoải mái' },
+  { id:'luxury', name:'Xe Sang Luxury', emoji:'🏎️', type:'Luxury', price:60000, capacity:4, speed:80, fuelCost:10, comfort:95, earn:25, maintenance:8, description:'Dịch vụ cao cấp, thu nhập cao' },
+  { id:'electric', name:'Xe Điện Eco', emoji:'⚡', type:'Electric', price:45000, capacity:4, speed:70, fuelCost:2, comfort:80, earn:16, maintenance:2, description:'Thân thiện môi trường' },
+  { id:'van', name:'Van Gia Đình', emoji:'🚐', type:'Van', price:25000, capacity:8, speed:50, fuelCost:9, comfort:55, earn:12, maintenance:6, description:'Chở đông người, phù hợp tour' },
+  { id:'minibus', name:'Minibus', emoji:'🚌', type:'Minibus', price:50000, capacity:15, speed:45, fuelCost:15, comfort:45, earn:20, maintenance:10, description:'Phục vụ nhóm lớn' },
+  { id:'tuktuk', name:'Tuk Tuk', emoji:'🛺', type:'TukTuk', price:5000, capacity:3, speed:35, fuelCost:2, comfort:30, earn:5, maintenance:1, description:'Rẻ, linh hoạt trong phố' },
+  { id:'limo', name:'Limousine VIP', emoji:'🚕', type:'Limousine', price:100000, capacity:6, speed:65, fuelCost:12, comfort:100, earn:40, maintenance:15, description:'Cực kỳ sang trọng' },
+];
+
+const DRIVER_NAMES = [
+  'Minh Tuấn','Hoàng Nam','Thanh Hải','Văn Đức','Quốc Bảo',
+  'Hữu Thắng','Đình Khoa','Ngọc Sơn','Anh Dũng','Trung Kiên',
+  'Phương Nam','Hải Đăng','Tấn Phát','Đức Trọng','Bảo Long',
+  'Thành Đạt','Quang Huy','Minh Đức','Tiến Dũng','Việt Anh',
+  'Lan Anh','Thu Hương','Ngọc Mai','Kiều My','Phương Linh'
+];
+
+const DRIVER_AVATARS = ['👨‍✈️','👨‍💼','🧑‍✈️','👩‍✈️','🧑‍💼','👨‍🔧','👩‍💼','🧔','👱‍♂️','👨‍🦱'];
+
+const ZONES = [
+  { id:'downtown', name:'Trung tâm', x:'5%', y:'10%', w:'28%', h:'35%', color:'#10b981', demand:90, fare:1.2 },
+  { id:'airport', name:'Sân bay', x:'65%', y:'5%', w:'30%', h:'25%', color:'#3b82f6', demand:75, fare:2.0 },
+  { id:'suburb', name:'Ngoại ô', x:'5%', y:'55%', w:'25%', h:'38%', color:'#f59e0b', demand:50, fare:0.8 },
+  { id:'business', name:'Khu KD', x:'38%', y:'15%', w:'22%', h:'30%', color:'#8b5cf6', demand:85, fare:1.5 },
+  { id:'tourist', name:'Du lịch', x:'38%', y:'55%', w:'25%', h:'35%', color:'#ec4899', demand:70, fare:1.8 },
+  { id:'industrial', name:'Công nghiệp', x:'68%', y:'40%', w:'27%', h:'30%', color:'#6b7280', demand:40, fare:0.7 },
+  { id:'port', name:'Cảng biển', x:'68%', y:'75%', w:'27%', h:'20%', color:'#06b6d4', demand:55, fare:1.3 },
+];
+
+const RESEARCH_TREE = [
+  { id:'gps', name:'GPS Nâng cao', emoji:'📡', desc:'Tăng 15% tốc độ tìm khách', cost:5000, rp:10, requires:[], effect:{speedBonus:0.15} },
+  { id:'app', name:'Ứng dụng đặt xe', emoji:'📱', desc:'Tăng 25% lượng khách', cost:10000, rp:20, requires:['gps'], effect:{demandBonus:0.25} },
+  { id:'training', name:'Đào tạo tài xế', emoji:'📚', desc:'+10 kỹ năng cho tài xế mới', cost:8000, rp:15, requires:[], effect:{driverSkillBonus:10} },
+  { id:'maintenance', name:'Garage thông minh', emoji:'🔧', desc:'Giảm 30% chi phí bảo trì', cost:12000, rp:18, requires:[], effect:{maintenanceDiscount:0.3} },
+  { id:'electric_charge', name:'Trạm sạc điện', emoji:'🔋', desc:'Giảm 50% chi phí xe điện', cost:15000, rp:25, requires:['gps'], effect:{electricDiscount:0.5} },
+  { id:'vip_service', name:'Dịch vụ VIP', emoji:'👑', desc:'Mở khóa khách VIP, +50% tip', cost:20000, rp:30, requires:['app','training'], effect:{vipTipBonus:0.5} },
+  { id:'ai_dispatch', name:'AI Điều phối', emoji:'🤖', desc:'Tự động ghép xe tối ưu', cost:25000, rp:40, requires:['app'], effect:{autoDispatch:true} },
+  { id:'eco_fleet', name:'Đội xe xanh', emoji:'🌿', desc:'+20% rep khi dùng xe điện', cost:18000, rp:22, requires:['electric_charge'], effect:{ecoRepBonus:0.2} },
+  { id:'premium_brand', name:'Thương hiệu cao cấp', emoji:'💎', desc:'+30% giá cước', cost:30000, rp:50, requires:['vip_service'], effect:{fareBonus:0.3} },
+  { id:'fleet_expansion', name:'Mở rộng garage', emoji:'🏗️', desc:'+5 slot garage', cost:15000, rp:20, requires:['maintenance'], effect:{garageSlots:5} },
+  { id:'loyalty', name:'Chương trình khách hàng thân thiết', emoji:'💳', desc:'+15% khách quay lại', cost:12000, rp:18, requires:['app'], effect:{loyaltyBonus:0.15} },
+  { id:'analytics', name:'Phân tích dữ liệu', emoji:'📊', desc:'Hiển thị thêm thống kê', cost:10000, rp:15, requires:['ai_dispatch'], effect:{analytics:true} },
+];
+
+const MARKETING_CAMPAIGNS = [
+  { id:'social', name:'Quảng cáo MXH', emoji:'📲', cost:2000, duration:3, effect:{demand:10,rep:0.1}, desc:'Facebook, Instagram, TikTok' },
+  { id:'billboard', name:'Biển quảng cáo', emoji:'🪧', cost:5000, duration:7, effect:{demand:20,rep:0.2}, desc:'Billboard trên phố chính' },
+  { id:'radio', name:'Quảng cáo Radio', emoji:'📻', cost:3000, duration:5, effect:{demand:15,rep:0.15}, desc:'Phát trên các đài FM' },
+  { id:'partnership', name:'Đối tác khách sạn', emoji:'🏨', cost:8000, duration:10, effect:{demand:30,rep:0.3}, desc:'Hợp tác với khách sạn lớn' },
+  { id:'event_sponsor', name:'Tài trợ sự kiện', emoji:'🎪', cost:10000, duration:5, effect:{demand:25,rep:0.5}, desc:'Tài trợ sự kiện thành phố' },
+  { id:'influencer', name:'KOL Review', emoji:'🌟', cost:7000, duration:3, effect:{demand:35,rep:0.4}, desc:'Mời KOL trải nghiệm' },
+];
+
+const ACHIEVEMENTS_LIST = [
+  { id:'first_ride', name:'Chuyến đi đầu tiên', emoji:'🎯', desc:'Hoàn thành chuyến đi đầu tiên', condition: g => g.totalTrips >= 1 },
+  { id:'rides_50', name:'50 chuyến đi', emoji:'🚀', desc:'Hoàn thành 50 chuyến đi', condition: g => g.totalTrips >= 50 },
+  { id:'rides_200', name:'200 chuyến đi', emoji:'💫', desc:'Hoàn thành 200 chuyến đi', condition: g => g.totalTrips >= 200 },
+  { id:'rides_1000', name:'Nghìn chuyến', emoji:'👑', desc:'Hoàn thành 1000 chuyến đi', condition: g => g.totalTrips >= 1000 },
+  { id:'money_100k', name:'Tỷ phú nhỏ', emoji:'💰', desc:'Đạt $100,000', condition: g => g.money >= 100000 },
+  { id:'money_500k', name:'Tỷ phú lớn', emoji:'💎', desc:'Đạt $500,000', condition: g => g.money >= 500000 },
+  { id:'money_1m', name:'Triệu phú', emoji:'🏆', desc:'Đạt $1,000,000', condition: g => g.money >= 1000000 },
+  { id:'fleet_5', name:'Đội xe nhỏ', emoji:'🚗', desc:'Sở hữu 5 xe', condition: g => g.vehicles.length >= 5 },
+  { id:'fleet_20', name:'Đội xe lớn', emoji:'🏎️', desc:'Sở hữu 20 xe', condition: g => g.vehicles.length >= 20 },
+  { id:'drivers_10', name:'Đội ngũ', emoji:'👥', desc:'Thuê 10 tài xế', condition: g => g.drivers.length >= 10 },
+  { id:'rep_45', name:'Uy tín cao', emoji:'⭐', desc:'Đạt 4.5 sao', condition: g => g.reputation >= 4.5 },
+  { id:'rep_49', name:'Gần hoàn hảo', emoji:'🌟', desc:'Đạt 4.9 sao', condition: g => g.reputation >= 4.9 },
+  { id:'level_5', name:'Cấp 5', emoji:'🎖️', desc:'Đạt cấp 5', condition: g => g.level >= 5 },
+  { id:'level_10', name:'Cấp 10', emoji:'🏅', desc:'Đạt cấp 10', condition: g => g.level >= 10 },
+  { id:'first_luxury', name:'Sang trọng', emoji:'🏎️', desc:'Mua xe sang đầu tiên', condition: g => g.vehicles.some(v => v.type === 'luxury' || v.type === 'limo') },
+  { id:'first_electric', name:'Eco Warrior', emoji:'♻️', desc:'Mua xe điện đầu tiên', condition: g => g.vehicles.some(v => v.type === 'electric') },
+  { id:'research_5', name:'Nhà nghiên cứu', emoji:'🔬', desc:'Mở khóa 5 công nghệ', condition: g => Object.values(g.research).filter(v=>v).length >= 5 },
+  { id:'day_30', name:'1 tháng', emoji:'📅', desc:'Chơi đủ 30 ngày', condition: g => g.day >= 30 },
+];
+
+const EVENTS_POOL = [
+  { emoji:'🌧️', title:'Mưa lớn', desc:'Mưa lớn làm tăng nhu cầu đi taxi nhưng tốc độ giảm.', effects:[{type:'demand',val:30,dur:3},{type:'speed',val:-20,dur:3}] },
+  { emoji:'🎉', title:'Lễ hội thành phố', desc:'Lễ hội tăng lượng khách du lịch!', effects:[{type:'demand',val:50,dur:5}] },
+  { emoji:'🚧', title:'Tắc đường', desc:'Kẹt xe nghiêm trọng trên các trục chính.', effects:[{type:'speed',val:-30,dur:2}] },
+  { emoji:'💰', title:'Khách VIP', desc:'Một khách VIP cần đi với tip hậu hĩnh!', effects:[{type:'bonus',val:5000}] },
+  { emoji:'⛽', title:'Giá xăng tăng', desc:'Giá nhiên liệu tăng 30% trong tuần này.', effects:[{type:'fuel',val:30,dur:7}] },
+  { emoji:'📰', title:'Bài báo tích cực', desc:'Báo chí viết tốt về công ty bạn!', effects:[{type:'rep',val:0.3}] },
+  { emoji:'🏆', title:'Giải thưởng', desc:'Công ty đạt giải dịch vụ xuất sắc!', effects:[{type:'rep',val:0.5},{type:'bonus',val:10000}] },
+  { emoji:'🔧', title:'Thu hồi xe', desc:'Một dòng xe bị lỗi, chi phí sửa chữa bất ngờ.', effects:[{type:'expense',val:3000}] },
+  { emoji:'👨‍💼', title:'Hợp đồng doanh nghiệp', desc:'Một công ty lớn muốn hợp tác!', effects:[{type:'bonus',val:8000},{type:'demand',val:20,dur:10}] },
+  { emoji:'🌟', title:'Tài xế xuất sắc', desc:'Một tài xế được khách khen ngợi!', effects:[{type:'rep',val:0.2}] },
+];
+
+const CONTRACTS_POOL = [
+  { name:'Đưa đón sân bay', icon:'✈️', desc:'20 chuyến đưa đón sân bay', trips:20, payout:8000, duration:7, zone:'airport' },
+  { name:'Tour thành phố', icon:'🏙️', desc:'10 tour tham quan thành phố', trips:10, payout:5000, duration:5, zone:'tourist' },
+  { name:'Dịch vụ doanh nghiệp', icon:'💼', desc:'30 chuyến đi công sở', trips:30, payout:12000, duration:10, zone:'business' },
+  { name:'Chở hàng cảng', icon:'🚢', desc:'15 chuyến đến cảng', trips:15, payout:6000, duration:7, zone:'port' },
+  { name:'Đưa đón bệnh viện', icon:'🏥', desc:'25 chuyến đến bệnh viện', trips:25, payout:10000, duration:10, zone:'downtown' },
+  { name:'Phục vụ nhà hàng', icon:'🍽️', desc:'15 chuyến đến nhà hàng', trips:15, payout:5500, duration:5, zone:'downtown' },
+  { name:'Chuyến đêm', icon:'🌙', desc:'20 chuyến đêm khuya', trips:20, payout:9000, duration:7, zone:'suburb' },
+];
+
+const WEATHERS = [
+  { id:'sunny', icon:'☀️', text:'Nắng đẹp', demandMod:0, speedMod:0 },
+  { id:'cloudy', icon:'⛅', text:'Nhiều mây', demandMod:5, speedMod:0 },
+  { id:'rainy', icon:'🌧️', text:'Mưa', demandMod:20, speedMod:-15 },
+  { id:'stormy', icon:'⛈️', text:'Bão', demandMod:40, speedMod:-30 },
+  { id:'foggy', icon:'🌫️', text:'Sương mù', demandMod:10, speedMod:-10 },
+  { id:'hot', icon:'🔥', text:'Nắng nóng', demandMod:15, speedMod:0 },
+];
+
+// === UTILITY FUNCTIONS ===
+const fmt = n => {
+  if(n >= 1000000) return '$' + (n/1000000).toFixed(2) + 'M';
+  if(n >= 1000) return '$' + (n/1000).toFixed(1) + 'K';
+  return '$' + Math.floor(n).toLocaleString();
+};
+const fmtNum = n => Math.floor(n).toLocaleString();
+const rand = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).substr(2,5);
+const clamp = (v,min,max) => Math.max(min, Math.min(max, v));
+
+// === INITIALIZATION ===
+function init() {
+  generateDriverPool();
+  generateMissions();
+  generateContracts();
+  initResearch();
+}
+
+function initResearch() {
+  RESEARCH_TREE.forEach(r => { if(!G.research[r.id]) G.research[r.id] = false; });
+}
+
+function generateDriverPool() {
+  G.driverPool = [];
+  for(let i = 0; i < 8; i++) {
+    G.driverPool.push({
+      id: uid(),
+      name: pick(DRIVER_NAMES),
+      avatar: pick(DRIVER_AVATARS),
+      skill: rand(20, 80),
+      satisfaction: rand(60, 100),
+      experience: rand(0, 50),
+      salary: rand(800, 2000),
+      personality: pick(['Cẩn thận','Nhanh nhẹn','Thân thiện','Kinh nghiệm','Mới vào nghề']),
+      assigned: null,
+      tripsCompleted: 0,
+      earnings: 0,
+    });
+  }
+}
+
+function generateMissions() {
+  G.missions = [
+    { id:uid(), emoji:'🎯', title:'Hoàn thành 10 chuyến', desc:'Hoàn thành 10 chuyến đi trong ngày', target:10, progress:0, reward:3000, active:true, completed:false },
+    { id:uid(), emoji:'⭐', title:'Đạt 4.5 sao', desc:'Nâng reputation lên 4.5', target:4.5, progress:G.reputation, reward:5000, active:true, completed:false, type:'rep' },
+    { id:uid(), emoji:'💰', title:'Kiếm $20,000', desc:'Kiếm $20,000 doanh thu', target:20000, progress:0, reward:5000, active:true, completed:false, type:'earn' },
+    { id:uid(), emoji:'🚗', title:'Mua 3 xe', desc:'Sở hữu ít nhất 3 xe', target:3, progress:G.vehicles.length, reward:4000, active:true, completed:false, type:'fleet' },
+    { id:uid(), emoji:'👨‍✈️', title:'Thuê 5 tài xế', desc:'Thuê ít nhất 5 tài xế', target:5, progress:G.drivers.length, reward:3500, active:true, completed:false, type:'drivers' },
+  ];
+}
+
+function generateContracts() {
+  G.contracts = [];
+  for(let i = 0; i < 4; i++) {
+    let c = {...pick(CONTRACTS_POOL)};
+    c.id = uid();
+    c.progress = 0;
+    G.contracts.push(c);
+  }
+}
+
+// === GAME LOOP ===
+let gameInterval;
+let tickCount = 0;
+
+function startGameLoop() {
+  if(gameInterval) clearInterval(gameInterval);
+  updateGameSpeed();
+}
+
+function updateGameSpeed() {
+  if(gameInterval) clearInterval(gameInterval);
+  if(G.speed === 0) return;
+  const intervals = [0, 2000, 1000, 400];
+  gameInterval = setInterval(gameTick, intervals[G.speed]);
+}
+
+function setSpeed(s) {
+  G.speed = s;
+  document.querySelectorAll('.speed-btn').forEach((b,i) => b.classList.toggle('active', i===s));
+  updateGameSpeed();
+}
+
+function gameTick() {
+  tickCount++;
+  G.minute += 15;
+  if(G.minute >= 60) { G.minute = 0; G.hour++; }
+  if(G.hour >= 24) {
+    G.hour = 0;
+    endOfDay();
+    G.day++;
+  }
+
+  // Generate ride requests
+  if(tickCount % 2 === 0) generateRideRequests();
+
+  // Process active rides
+  processActiveRides();
+
+  // Auto-dispatch: always light auto, AI research = faster
+  if(G.research.ai_dispatch) {
+    if(tickCount % 2 === 0) autoDispatch();
+  } else if(tickCount % 5 === 0) {
+    autoDispatch(); // slower without research
+  }
+
+  // Random events
+  if(tickCount % 40 === 0 && Math.random() < 0.3) triggerRandomEvent();
+
+  // Weather changes
+  if(tickCount % 60 === 0) changeWeather();
+
+  // Vehicle deterioration
+  if(tickCount % 20 === 0) deteriorateVehicles();
+
+  // Check achievements
+  if(tickCount % 10 === 0) checkAchievements();
+
+  // Update missions
+  updateMissions();
+
+  // Update active contracts
+  updateActiveContracts();
+
+  // Update marketing
+  updateMarketing();
+
+  // Update UI
+  updateHeaderUI();
+  if(document.querySelector('.page.active')?.id === 'page-dashboard') renderDashboard();
+  if(document.querySelector('.page.active')?.id === 'page-dispatch') renderDispatch();
+  if(document.querySelector('.page.active')?.id === 'page-city') renderCityMap();
+}
+
+function endOfDay() {
+  // Pay driver salaries
+  let salaryTotal = 0;
+  G.drivers.forEach(d => { salaryTotal += d.salary; });
+  G.money -= salaryTotal;
+  G.stats.driverPayments += salaryTotal;
+  G.dailyExpenses += salaryTotal;
+
+  // Record revenue
+  G.revenueHistory.push(G.dailyEarnings);
+  if(G.revenueHistory.length > 7) G.revenueHistory.shift();
+  if(G.dailyEarnings > G.stats.bestDay) G.stats.bestDay = G.dailyEarnings;
+
+  // XP gain
+  let xpGain = Math.floor(G.dailyTrips * 5 + G.dailyEarnings * 0.01);
+  gainXP(xpGain);
+
+  // Research points
+  let rp = Math.floor(G.dailyTrips * 0.5 + G.level * 2);
+  G.stats.researchPoints = (G.stats.researchPoints || 0) + rp;
+
+  // Loan interest
+  G.loans.forEach(l => {
+    let interest = l.amount * l.rate / 30;
+    G.money -= interest;
+    G.dailyExpenses += interest;
+  });
+
+  // Contract deadline check
+  G.activeContracts = G.activeContracts.filter(c => {
+    c.daysLeft--;
+    if(c.daysLeft <= 0 && c.progress < c.trips) {
+      addNotification('📋','Hợp đồng thất bại', `Hết hạn: ${c.name}`);
+      G.reputation = clamp(G.reputation - 0.1, 1, 5);
+      return false;
+    }
+    return true;
+  });
+
+  addNotification('📊', `Kết thúc ngày ${G.day}`,
+    `Thu: ${fmt(G.dailyEarnings)} | Chi: ${fmt(G.dailyExpenses)} | Chuyến: ${G.dailyTrips}`);
+
+  G.dailyEarnings = 0;
+  G.dailyExpenses = 0;
+  G.dailyTrips = 0;
+}
+
+function gainXP(amount) {
+  G.xp += amount;
+  while(G.xp >= G.xpNeeded) {
+    G.xp -= G.xpNeeded;
+    G.level++;
+    G.xpNeeded = Math.floor(G.xpNeeded * 1.5);
+    addNotification('🎉', 'Lên cấp!', `Bạn đã đạt cấp ${G.level}!`);
+    G.money += G.level * 1000;
+  }
+}
+
+// === RIDE SYSTEM ===
+function generateRideRequests() {
+  if(G.rideRequests.length >= 15) return;
+  let availableDrivers = G.drivers.filter(d => !d.onRide);
+  if(availableDrivers.length === 0 && G.rideRequests.length >= 5) return;
+
+  let demandMod = 1;
+  let w = WEATHERS.find(w => w.id === G.weather);
+  if(w) demandMod += w.demandMod / 100;
+  if(G.research.app) demandMod += 0.25;
+  if(G.hour >= 7 && G.hour <= 9) demandMod += 0.3;
+  if(G.hour >= 17 && G.hour <= 19) demandMod += 0.4;
+  if(G.hour >= 22 || G.hour <= 5) demandMod -= 0.3;
+
+  Object.values(G.marketingActive).forEach(m => { if(m.daysLeft > 0) demandMod += m.effect.demand / 100; });
+
+  if(Math.random() < 0.4 * demandMod) {
+    let from = pick(ZONES);
+    let to = pick(ZONES.filter(z => z.id !== from.id));
+    let distance = rand(3, 25);
+    let baseFare = distance * (from.fare + to.fare) / 2;
+    let isVIP = G.research.vip_service && Math.random() < 0.1;
+    let fare = baseFare * (isVIP ? 2.5 : 1);
+    if(G.research.premium_brand) fare *= 1.3;
+
+    G.rideRequests.push({
+      id: uid(),
+      from: from.name,
+      to: to.name,
+      fromZone: from.id,
+      toZone: to.id,
+      distance,
+      fare: Math.floor(fare),
+      isVIP,
+      patience: rand(30, 90),
+      time: `${String(G.hour).padStart(2,'0')}:${String(G.minute).padStart(2,'0')}`,
+      passengers: rand(1, 4),
+    });
+  }
+
+  // Remove expired requests
+  G.rideRequests = G.rideRequests.filter(r => {
+    r.patience--;
+    return r.patience > 0;
+  });
+}
+
+
+function autoAssignVehicles() {
+  let freeVehicles = G.vehicles.filter(v =>
+    v.condition > 10 && !G.drivers.some(d => d.assigned === v.id)
+  );
+  G.drivers.filter(d => !d.assigned && !d.onRide).forEach(d => {
+    if(freeVehicles.length === 0) return;
+    let v = freeVehicles.shift();
+    d.assigned = v.id;
+  });
+}
+
+function autoAssignAll() {
+  autoAssignVehicles();
+  showNotif('Đã tự động gán xe cho tài xế trống');
+  renderDrivers();
+  renderGarage();
+  renderDispatch();
+}
+
+function assignRide(requestId) {
+  let req = G.rideRequests.find(r => r.id === requestId);
+  if(!req) return;
+
+  // Auto-link free drivers to free vehicles if needed
+  autoAssignVehicles();
+
+  let availableDrivers = G.drivers.filter(d => {
+    if(d.onRide) return false;
+    if(!d.assigned) return false;
+    let v = G.vehicles.find(x => x.id === d.assigned);
+    return v && v.condition > 10;
+  });
+  if(availableDrivers.length === 0) {
+    showNotif('Không có tài xế + xe sẵn sàng! Hãy mua xe và gán tài xế.');
+    return;
+  }
+
+  // Prefer higher skill drivers
+  availableDrivers.sort((a,b) => (b.skill||0) - (a.skill||0));
+  let driver = availableDrivers[0];
+  let vehicle = G.vehicles.find(v => v.id === driver.assigned);
+  if(!vehicle || vehicle.condition <= 10) {
+    showNotif('Xe hỏng hoặc không hợp lệ!');
+    return;
+  }
+
+  driver.onRide = true;
+
+  let duration = Math.ceil(req.distance / 5);
+  G.activeRides.push({
+    id: uid(),
+    requestId: req.id,
+    driverId: driver.id,
+    driverName: driver.name,
+    vehicleId: vehicle.id,
+    vehicleName: vehicle.name,
+    from: req.from, to: req.to,
+    fromZone: req.fromZone, toZone: req.toZone,
+    fare: req.fare,
+    isVIP: req.isVIP,
+    duration: duration,
+    progress: 0,
+    distance: req.distance,
+  });
+
+  G.rideRequests = G.rideRequests.filter(r => r.id !== requestId);
+  renderDispatch();
+}
+
+function processActiveRides() {
+  let completed = [];
+  G.activeRides.forEach(ride => {
+    ride.progress++;
+    if(ride.progress >= ride.duration) {
+      completed.push(ride);
+    }
+  });
+
+  completed.forEach(ride => {
+    let driver = G.drivers.find(d => d.id === ride.driverId);
+    let vehicle = G.vehicles.find(v => v.id === ride.vehicleId);
+
+    let tip = ride.isVIP ? ride.fare * 0.3 : (Math.random() < 0.3 ? ride.fare * 0.1 : 0);
+    if(G.research.vip_service) tip *= 1.5;
+    let totalFare = Math.floor(ride.fare + tip);
+
+    let fuelCost = 0;
+    if(vehicle) {
+      let vType = VEHICLE_TYPES.find(v => v.id === vehicle.type);
+      fuelCost = vType ? vType.fuelCost * ride.distance * 0.1 : 0;
+      if(vehicle.type === 'electric' && G.research.electric_charge) fuelCost *= 0.5;
+      vehicle.condition = clamp(vehicle.condition - rand(1,3), 0, 100);
+      vehicle.totalTrips = (vehicle.totalTrips || 0) + 1;
+    }
+
+    G.money += totalFare - fuelCost;
+    G.totalTrips++;
+    G.totalEarnings += totalFare;
+    G.dailyEarnings += totalFare;
+    G.dailyExpenses += fuelCost;
+    G.dailyTrips++;
+    G.stats.totalIncome += totalFare;
+    G.stats.totalExpense += fuelCost;
+    G.stats.fuelSpent += fuelCost;
+    G.stats.customersServed++;
+
+    if(driver) {
+      driver.onRide = false;
+      driver.tripsCompleted++;
+      driver.earnings += totalFare;
+      driver.experience = clamp(driver.experience + rand(1,3), 0, 100);
+      driver.skill = clamp(driver.skill + (Math.random() < 0.1 ? 1 : 0), 0, 100);
+    }
+
+    // Reputation change
+    let repChange = 0;
+    if(driver && driver.skill > 70) repChange += 0.01;
+    if(vehicle && vehicle.condition > 70) repChange += 0.01;
+    if(ride.isVIP) repChange += 0.02;
+    if(vehicle && vehicle.condition < 30) repChange -= 0.02;
+    G.reputation = clamp(G.reputation + repChange, 1, 5);
+
+    // Active contracts progress
+    G.activeContracts.forEach(c => {
+      if(ride.fromZone === c.zone || ride.toZone === c.zone) {
+        c.progress++;
+        if(c.progress >= c.trips && !c.completed) {
+          c.completed = true;
+          G.money += c.payout;
+          addNotification('✅', 'Hợp đồng hoàn thành!', `${c.name}: +${fmt(c.payout)}`);
+        }
+      }
+    });
+
+    G.activeRides = G.activeRides.filter(r => r.id !== ride.id);
+  });
+}
+
+function autoDispatch() {
+  if(G.rideRequests.length === 0) return;
+  autoAssignVehicles();
+  let availableDrivers = G.drivers.filter(d => {
+    if(d.onRide || !d.assigned) return false;
+    let v = G.vehicles.find(x => x.id === d.assigned);
+    return v && v.condition > 10;
+  });
+  if(availableDrivers.length === 0) return;
+
+  // Sort requests by fare (highest first)
+  let sortedRequests = [...G.rideRequests].sort((a,b) => b.fare - a.fare);
+
+  for(let req of sortedRequests) {
+    if(availableDrivers.length === 0) break;
+    let driver = availableDrivers[0];
+    let vehicle = G.vehicles.find(v => v.id === driver.assigned);
+    if(!vehicle || vehicle.condition <= 10) continue;
+
+    driver.onRide = true;
+    let duration = Math.ceil(req.distance / 5);
+
+    G.activeRides.push({
+      id: uid(),
+      requestId: req.id,
+      driverId: driver.id,
+      driverName: driver.name,
+      vehicleId: vehicle.id,
+      vehicleName: vehicle.name,
+      from: req.from, to: req.to,
+      fromZone: req.fromZone, toZone: req.toZone,
+      fare: req.fare, isVIP: req.isVIP,
+      duration, progress: 0, distance: req.distance,
+    });
+
+    G.rideRequests = G.rideRequests.filter(r => r.id !== req.id);
+    availableDrivers = availableDrivers.filter(d => d.id !== driver.id);
+  }
+}
+
+// === VEHICLE MANAGEMENT ===
+function buyVehicle(typeId) {
+  let vType = VEHICLE_TYPES.find(v => v.id === typeId);
+  if(!vType) return;
+  if(G.money < vType.price) { showNotif('Không đủ tiền!'); return; }
+  if(G.vehicles.length >= G.garageSlots) { showNotif('Garage đầy!'); return; }
+
+  G.money -= vType.price;
+  G.vehicles.push({
+    id: uid(),
+    type: typeId,
+    name: vType.name,
+    emoji: vType.emoji,
+    condition: 100,
+    totalTrips: 0,
+    level: 1,
+    purchased: G.day,
+  });
+
+  addNotification('🚗', 'Xe mới!', `Đã mua ${vType.name}`);
+  gainXP(20);
+  renderFleet();
+  updateHeaderUI();
+}
+
+function sellVehicle(vehId) {
+  let v = G.vehicles.find(x => x.id === vehId);
+  if(!v) return;
+  let vType = VEHICLE_TYPES.find(x => x.id === v.type);
+  let sellPrice = Math.floor(vType.price * 0.5 * (v.condition / 100));
+
+  // Unassign driver
+  G.drivers.forEach(d => { if(d.assigned === vehId) d.assigned = null; });
+
+  G.money += sellPrice;
+  G.vehicles = G.vehicles.filter(x => x.id !== vehId);
+  addNotification('💵', 'Đã bán xe', `${v.name}: +${fmt(sellPrice)}`);
+  renderFleet();
+  renderGarage();
+  updateHeaderUI();
+}
+
+function upgradeVehicle(vehId) {
+  let v = G.vehicles.find(x => x.id === vehId);
+  if(!v) return;
+  let cost = v.level * 3000;
+  if(G.money < cost) { showNotif('Không đủ tiền!'); return; }
+  if(v.level >= 5) { showNotif('Đã đạt cấp tối đa!'); return; }
+  G.money -= cost;
+  v.level++;
+  addNotification('⬆️', 'Nâng cấp xe', `${v.name} → Lv.${v.level}`);
+  renderGarage();
+  updateHeaderUI();
+}
+
+function repairVehicle(vehId) {
+  let v = G.vehicles.find(x => x.id === vehId);
+  if(!v) return;
+  let cost = Math.floor((100 - v.condition) * 30);
+  if(G.research.maintenance) cost = Math.floor(cost * 0.7);
+  if(G.money < cost) { showNotif('Không đủ tiền!'); return; }
+  G.money -= cost;
+  v.condition = 100;
+  G.stats.maintenanceCost += cost;
+  addNotification('🔧', 'Sửa xe', `${v.name} đã được sửa: -${fmt(cost)}`);
+  renderGarage();
+  updateHeaderUI();
+}
+
+function deteriorateVehicles() {
+  G.vehicles.forEach(v => {
+    if(v.condition <= 0) return;
+    let wear = Math.random() < 0.5 ? rand(1, 2) : 0;
+    if(G.weather === 'stormy') wear += 1;
+    if(G.insurance) wear = Math.floor(wear * 0.5);
+    v.condition = clamp(v.condition - wear, 0, 100);
+  });
+}
+
+// === DRIVER MANAGEMENT ===
+function hireDriver(driverId) {
+  let d = G.driverPool.find(x => x.id === driverId);
+  if(!d) return;
+  let hireCost = d.salary * 2;
+  if(G.money < hireCost) { showNotif('Không đủ tiền!'); return; }
+
+  G.money -= hireCost;
+  if(G.research.training) d.skill = clamp(d.skill + 10, 0, 100);
+  let freeVeh = G.vehicles.find(v => v.condition > 10 && !G.drivers.some(dr => dr.assigned === v.id));
+  G.drivers.push({...d, onRide: false, assigned: freeVeh ? freeVeh.id : null, tripsCompleted: 0, earnings: 0});
+  G.driverPool = G.driverPool.filter(x => x.id !== driverId);
+
+  addNotification('👨‍✈️', 'Tài xế mới', `Đã thuê ${d.name}` + (freeVeh ? ` · gán ${freeVeh.emoji}` : ''));
+  gainXP(10);
+  renderDrivers();
+  updateHeaderUI();
+}
+
+function fireDriver(driverId) {
+  let d = G.drivers.find(x => x.id === driverId);
+  if(!d) return;
+  if(d.onRide) { showNotif('Tài xế đang chạy!'); return; }
+  let severance = d.salary;
+  G.money -= severance;
+  G.drivers = G.drivers.filter(x => x.id !== driverId);
+  addNotification('👋', 'Sa thải', `${d.name} đã rời công ty`);
+  renderDrivers();
+}
+
+function assignDriverToVehicle(driverId, vehicleId) {
+  let d = G.drivers.find(x => x.id === driverId);
+  if(!d) return;
+  // Unassign from old vehicle
+  d.assigned = vehicleId || null;
+  renderDrivers();
+  renderGarage();
+}
+
+function trainDriver(driverId) {
+  let d = G.drivers.find(x => x.id === driverId);
+  if(!d) return;
+  let cost = 1000;
+  if(G.money < cost) { showNotif('Không đủ tiền!'); return; }
+  G.money -= cost;
+  d.skill = clamp(d.skill + rand(3, 8), 0, 100);
+  d.satisfaction = clamp(d.satisfaction + 5, 0, 100);
+  addNotification('📚', 'Đào tạo', `${d.name} +kỹ năng`);
+  renderDrivers();
+}
+
+function refreshDriverPool() {
+  if(G.money < 500) { showNotif('Không đủ tiền!'); return; }
+  G.money -= 500;
+  generateDriverPool();
+  renderDrivers();
+}
+
+// === RESEARCH ===
+function unlockResearch(resId) {
+  let r = RESEARCH_TREE.find(x => x.id === resId);
+  if(!r || G.research[resId]) return;
+  if(r.requires.some(req => !G.research[req])) { showNotif('Chưa đủ điều kiện!'); return; }
+  if(G.money < r.cost) { showNotif('Không đủ tiền!'); return; }
+
+  G.money -= r.cost;
+  G.research[resId] = true;
+
+  // Apply effects
+  if(r.effect.garageSlots) G.garageSlots += r.effect.garageSlots;
+
+  addNotification('🔬', 'Nghiên cứu hoàn thành!', r.name);
+  gainXP(r.rp * 2);
+  renderResearch();
+  updateHeaderUI();
+}
+
+// === CONTRACTS ===
+function acceptContract(contractId) {
+  let c = G.contracts.find(x => x.id === contractId);
+  if(!c) return;
+  G.activeContracts.push({...c, daysLeft: c.duration, completed: false});
+  G.contracts = G.contracts.filter(x => x.id !== contractId);
+  addNotification('📋', 'Hợp đồng mới', `Đã nhận: ${c.name}`);
+  renderContracts();
+}
+
+function refreshContracts() {
+  generateContracts();
+  renderContracts();
+}
+
+function updateActiveContracts() {
+  G.activeContracts = G.activeContracts.filter(c => !c.completed || c.daysLeft > 0);
+}
+
+// === MARKETING ===
+function startCampaign(campId) {
+  let camp = MARKETING_CAMPAIGNS.find(c => c.id === campId);
+  if(!camp) return;
+  if(G.marketingActive[campId] && G.marketingActive[campId].daysLeft > 0) {
+    showNotif('Chiến dịch đang chạy!');
+    return;
+  }
+  if(G.money < camp.cost) { showNotif('Không đủ tiền!'); return; }
+  G.money -= camp.cost;
+  G.stats.marketingSpent += camp.cost;
+  G.marketingActive[campId] = { ...camp, daysLeft: camp.duration };
+  addNotification('📢', 'Marketing', `Bắt đầu: ${camp.name}`);
+  renderMarketing();
+  updateHeaderUI();
+}
+
+function updateMarketing() {
+  if(G.hour === 0 && G.minute === 0) {
+    Object.keys(G.marketingActive).forEach(k => {
+      let m = G.marketingActive[k];
+      if(m.daysLeft > 0) {
+        m.daysLeft--;
+        G.reputation = clamp(G.reputation + m.effect.rep / m.duration, 1, 5);
+        if(m.daysLeft <= 0) {
+          addNotification('📢', 'Marketing kết thúc', m.name);
+        }
+      }
+    });
+  }
+}
+
+// === EVENTS ===
+function triggerRandomEvent() {
+  let event = pick(EVENTS_POOL);
+  showEventModal(event);
+}
+
+function showEventModal(event) {
+  document.getElementById('modal-emoji').textContent = event.emoji;
+  document.getElementById('modal-title').textContent = event.title;
+  document.getElementById('modal-desc').textContent = event.desc;
+
+  let actionsHtml = '';
+  event.effects.forEach(e => {
+    if(e.type === 'bonus') { G.money += e.val; }
+    if(e.type === 'expense') { G.money -= e.val; G.dailyExpenses += e.val; }
+    if(e.type === 'rep') { G.reputation = clamp(G.reputation + e.val, 1, 5); }
+  });
+
+  actionsHtml = `<button class="btn btn-primary" onclick="closeModal()"><i class="fas fa-check"></i> OK</button>`;
+  document.getElementById('modal-actions').innerHTML = actionsHtml;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+// === WEATHER ===
+function changeWeather() {
+  let w = pick(WEATHERS);
+  G.weather = w.id;
+  document.getElementById('weather-icon').textContent = w.icon;
+  document.getElementById('weather-text').textContent = w.text;
+}
+
+// === ACHIEVEMENTS ===
+function checkAchievements() {
+  ACHIEVEMENTS_LIST.forEach(a => {
+    if(!G.achievements[a.id] && a.condition(G)) {
+      G.achievements[a.id] = true;
+      showAchievementToast(a.emoji, a.name);
+      gainXP(50);
+    }
+  });
+}
+
+function showAchievementToast(emoji, name) {
+  let toast = document.getElementById('ach-toast');
+  document.getElementById('ach-toast-icon').textContent = emoji;
+  document.getElementById('ach-toast-name').textContent = name;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+// === MISSIONS ===
+function updateMissions() {
+  G.missions.forEach(m => {
+    if(m.completed) return;
+    if(m.type === 'rep') m.progress = G.reputation;
+    else if(m.type === 'earn') m.progress = G.dailyEarnings;
+    else if(m.type === 'fleet') m.progress = G.vehicles.length;
+    else if(m.type === 'drivers') m.progress = G.drivers.length;
+    else m.progress = G.dailyTrips;
+
+    if(m.progress >= m.target && !m.completed) {
+      m.completed = true;
+      G.money += m.reward;
+      addNotification('🎯', 'Nhiệm vụ hoàn thành!', `${m.title}: +${fmt(m.reward)}`);
+      showAchievementToast('🎯', m.title);
+    }
+  });
+}
+
+// === BANK / LOANS ===
+function takeLoan(amount, rate, term) {
+  if(G.loans.length >= 3) { showNotif('Tối đa 3 khoản vay!'); return; }
+  G.money += amount;
+  G.loans.push({ id: uid(), amount, rate, term, daysLeft: term, paid: 0 });
+  addNotification('🏦', 'Vay tiền', `Nhận ${fmt(amount)}`);
+  renderFinance();
+  updateHeaderUI();
+}
+
+function payLoan(loanId) {
+  let loan = G.loans.find(l => l.id === loanId);
+  if(!loan) return;
+  let payment = loan.amount;
+  if(G.money < payment) { showNotif('Không đủ tiền!'); return; }
+  G.money -= payment;
+  G.loans = G.loans.filter(l => l.id !== loanId);
+  addNotification('✅', 'Trả nợ', `Đã trả ${fmt(payment)}`);
+  renderFinance();
+  updateHeaderUI();
+}
+
+// === NOTIFICATIONS ===
+function addNotification(icon, title, text) {
+  G.notifications.unshift({
+    icon, title, text,
+    time: `Ngày ${G.day} - ${String(G.hour).padStart(2,'0')}:${String(G.minute).padStart(2,'0')}`,
+  });
+  if(G.notifications.length > 50) G.notifications.pop();
+}
+
+function clearNotifications() {
+  G.notifications = [];
+  renderNotifications();
+}
+
+function showNotif(msg) {
+  try { addNotification('⚠️', 'Thông báo', msg); } catch(e) {}
+  let nb = document.getElementById('notif-btn');
+  if(nb) {
+    nb.style.color = 'var(--accent)';
+    setTimeout(() => { if(nb) nb.style.color = ''; }, 1000);
+  }
+  // Toast popup
+  let t = document.createElement('div');
+  t.className = 'game-toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2800);
+}
+
+// === RENDER FUNCTIONS ===
+function renderDashboard() {
+  // Stats cards
+  let statsHtml = `
+    <div class="stat-card money">
+      <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+      <div class="stat-value">${fmt(G.money)}</div>
+      <div class="stat-label">Tài sản</div>
+      <div class="stat-change ${G.dailyEarnings - G.dailyExpenses >= 0 ? 'up' : 'down'}">
+        <i class="fas fa-arrow-${G.dailyEarnings - G.dailyExpenses >= 0 ? 'up' : 'down'}"></i>
+        ${fmt(Math.abs(G.dailyEarnings - G.dailyExpenses))} hôm nay
+      </div>
+    </div>
+    <div class="stat-card trips">
+      <div class="stat-icon"><i class="fas fa-route"></i></div>
+      <div class="stat-value">${fmtNum(G.totalTrips)}</div>
+      <div class="stat-label">Tổng chuyến đi</div>
+      <div class="stat-change up"><i class="fas fa-arrow-up"></i> ${G.dailyTrips} hôm nay</div>
+    </div>
+    <div class="stat-card fleet">
+      <div class="stat-icon"><i class="fas fa-car"></i></div>
+      <div class="stat-value">${G.vehicles.length}</div>
+      <div class="stat-label">Đội xe</div>
+      <div class="stat-change up">${G.drivers.filter(d=>d.onRide).length} đang chạy</div>
+    </div>
+    <div class="stat-card rating">
+      <div class="stat-icon"><i class="fas fa-star"></i></div>
+      <div class="stat-value">${G.reputation.toFixed(1)}</div>
+      <div class="stat-label">Đánh giá</div>
+      <div class="stat-change ${G.reputation >= 4.0 ? 'up' : 'down'}">
+        <i class="fas fa-star"></i> / 5.0
+      </div>
+    </div>
+  `;
+  document.getElementById('dashboard-stats').innerHTML = statsHtml;
+
+  // Quick actions bar
+  let canDaily = G.lastDailyBonus !== new Date().toDateString();
+  let qa = document.getElementById('dashboard-quick-actions');
+  if(qa) {
+    qa.innerHTML = `
+      <button class="btn btn-primary btn-sm" onclick="claimDailyBonus()" ${canDaily ? '' : 'disabled'}>
+        <i class="fas fa-gift"></i> ${canDaily ? 'Nhận thưởng ngày' : 'Đã nhận hôm nay'}
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="autoAssignAll()">
+        <i class="fas fa-link"></i> Gán xe tự động
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="repairAllVehicles()">
+        <i class="fas fa-wrench"></i> Sửa hết xe
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="buyInsurance()" ${G.insurance ? 'disabled' : ''}>
+        <i class="fas fa-shield-alt"></i> ${G.insurance ? 'Đã có bảo hiểm' : 'Mua bảo hiểm ($15k)'}
+      </button>
+      <span class="tag cyan">Streak: ${G.dailyBonusStreak || 0} ngày</span>
+      ${G.insurance ? '<span class="tag green">🛡️ Bảo hiểm</span>' : ''}
+    `;
+  }
+
+
+  // Revenue chart
+  let maxRev = Math.max(...G.revenueHistory, 1);
+  let chartHtml = '';
+  G.revenueHistory.forEach((r, i) => {
+    let h = (r / maxRev) * 100;
+    chartHtml += `<div class="chart-bar" style="height:${Math.max(h, 3)}%" data-value="${fmt(r)}"></div>`;
+  });
+  document.getElementById('revenue-chart').innerHTML = chartHtml;
+
+  // Activity feed
+  let feedHtml = '';
+  G.notifications.slice(0, 8).forEach(n => {
+    feedHtml += `<div style="display:flex;gap:0.6rem;align-items:flex-start;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
+      <span style="font-size:1.1rem">${n.icon}</span>
+      <div>
+        <div style="font-size:0.82rem;font-weight:600">${n.title}</div>
+        <div style="font-size:0.72rem;color:var(--text-secondary)">${n.text}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('activity-feed').innerHTML = feedHtml || '<div class="empty-state"><p>Chưa có hoạt động</p></div>';
+
+  // Fleet overview
+  let fleetHtml = '';
+  let typeCounts = {};
+  G.vehicles.forEach(v => { typeCounts[v.type] = (typeCounts[v.type] || 0) + 1; });
+  Object.entries(typeCounts).forEach(([type, count]) => {
+    let vt = VEHICLE_TYPES.find(x => x.id === type);
+    fleetHtml += `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <span>${vt?.emoji || '🚗'}</span>
+        <span style="font-size:0.85rem">${vt?.name || type}</span>
+      </div>
+      <span class="tag accent">${count}</span>
+    </div>`;
+  });
+  document.getElementById('fleet-overview').innerHTML = fleetHtml || '<div class="empty-state"><p>Chưa có xe</p></div>';
+
+  // Top drivers
+  let topDrivers = [...G.drivers].sort((a,b) => b.earnings - a.earnings).slice(0, 5);
+  let driversHtml = '';
+  topDrivers.forEach((d, i) => {
+    driversHtml += `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <span>${d.avatar}</span>
+        <div>
+          <div style="font-size:0.85rem;font-weight:600">${d.name}</div>
+          <div style="font-size:0.7rem;color:var(--text-secondary)">${d.tripsCompleted} chuyến</div>
+        </div>
+      </div>
+      <span style="font-size:0.82rem;color:var(--green);font-weight:600">${fmt(d.earnings)}</span>
+    </div>`;
+  });
+  document.getElementById('top-drivers').innerHTML = driversHtml || '<div class="empty-state"><p>Chưa có tài xế</p></div>';
+}
+
+function renderCityMap() {
+  let zonesHtml = '';
+  let taxisHtml = '';
+  let detailsHtml = '';
+
+  ZONES.forEach(z => {
+    let demand = z.demand;
+    let w = WEATHERS.find(x => x.id === G.weather);
+    if(w) demand += w.demandMod;
+    let demandColor = demand > 70 ? 'var(--green)' : demand > 40 ? 'var(--accent)' : 'var(--red)';
+
+    zonesHtml += `<div class="map-zone" style="left:${z.x};top:${z.y};width:${z.w};height:${z.h};border-color:${z.color}40;background:${z.color}08">
+      <div class="zone-name" style="color:${z.color}">${z.name}</div>
+      <div class="zone-demand" style="color:${demandColor}">Nhu cầu: ${demand}%</div>
+    </div>`;
+
+    detailsHtml += `<div class="card" style="border-left:3px solid ${z.color}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+        <span style="font-weight:700;font-size:0.9rem;color:${z.color}">${z.name}</span>
+        <span class="tag ${demand > 70 ? 'green' : demand > 40 ? 'accent' : 'red'}">${demand}%</span>
+      </div>
+      <div style="font-size:0.78rem;color:var(--text-secondary)">Hệ số giá: x${z.fare.toFixed(1)}</div>
+      <div class="progress" style="margin-top:0.5rem">
+        <div class="progress-fill ${demand > 70 ? 'green' : demand > 40 ? 'accent' : 'red'}" style="width:${demand}%"></div>
+      </div>
+    </div>`;
+  });
+
+  // Taxi icons on map
+  G.activeRides.forEach(ride => {
+    let toZone = ZONES.find(z => z.id === ride.toZone);
+    if(toZone) {
+      let px = parseFloat(toZone.x) + parseFloat(toZone.w)/2;
+      let py = parseFloat(toZone.y) + parseFloat(toZone.h)/2;
+      // Add some randomness
+      px += (Math.random() - 0.5) * 10;
+      py += (Math.random() - 0.5) * 10;
+      taxisHtml += `<div class="map-taxi" style="left:${px}%;top:${py}%" title="${ride.driverName}: ${ride.from} → ${ride.to}">🚕</div>`;
+    }
+  });
+
+  document.getElementById('map-zones').innerHTML = zonesHtml;
+  document.getElementById('map-taxis').innerHTML = taxisHtml;
+  document.getElementById('zone-details').innerHTML = detailsHtml;
+}
+
+function renderFleet() {
+  // Vehicle shop
+  let shopHtml = '';
+  VEHICLE_TYPES.forEach(v => {
+    let canBuy = G.money >= v.price && G.vehicles.length < G.garageSlots;
+    shopHtml += `<div class="vehicle-card">
+      <div class="vehicle-emoji">${v.emoji}</div>
+      <div class="vehicle-name">${v.name}</div>
+      <div class="vehicle-type">${v.type} · ${v.description}</div>
+      <div class="vehicle-stats">
+        <div class="vehicle-stat"><span class="vehicle-stat-label">Sức chứa</span><span class="vehicle-stat-value">${v.capacity} người</span></div>
+        <div class="vehicle-stat"><span class="vehicle-stat-label">Tốc độ</span><span class="vehicle-stat-value">${v.speed} km/h</span></div>
+        <div class="vehicle-stat"><span class="vehicle-stat-label">Tiện nghi</span><span class="vehicle-stat-value">${v.comfort}%</span></div>
+        <div class="vehicle-stat"><span class="vehicle-stat-label">Thu nhập/km</span><span class="vehicle-stat-value">$${v.earn}</span></div>
+        <div class="vehicle-stat"><span class="vehicle-stat-label">Nhiên liệu/km</span><span class="vehicle-stat-value">$${v.fuelCost}</span></div>
+      </div>
+      <div class="vehicle-price">${fmt(v.price)}</div>
+      <button class="btn btn-primary" style="width:100%" onclick="buyVehicle('${v.id}')" ${!canBuy?'disabled':''}>
+        <i class="fas fa-shopping-cart"></i> Mua
+      </button>
+    </div>`;
+  });
+  document.getElementById('vehicle-shop').innerHTML = shopHtml;
+
+  // Owned vehicles
+  let ownedHtml = '';
+  document.getElementById('owned-count').textContent = G.vehicles.length;
+
+  if(G.vehicles.length === 0) {
+    ownedHtml = '<div class="empty-state"><i class="fas fa-car"></i><p>Chưa có xe nào. Hãy mua xe đầu tiên!</p></div>';
+  } else {
+    ownedHtml = '<table class="data-table"><thead><tr><th>Xe</th><th>Loại</th><th>Tình trạng</th><th>Cấp</th><th>Tài xế</th><th>Chuyến</th><th></th></tr></thead><tbody>';
+    G.vehicles.forEach(v => {
+      let vType = VEHICLE_TYPES.find(x => x.id === v.type);
+      let driver = G.drivers.find(d => d.assigned === v.id);
+      let condColor = v.condition > 70 ? 'green' : v.condition > 30 ? 'accent' : 'red';
+      ownedHtml += `<tr>
+        <td><span style="font-size:1.3rem">${v.emoji}</span> ${v.name}</td>
+        <td><span class="tag blue">${vType?.type || ''}</span></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <div class="progress" style="width:80px"><div class="progress-fill ${condColor}" style="width:${v.condition}%"></div></div>
+            <span style="font-size:0.75rem">${v.condition}%</span>
+          </div>
+        </td>
+        <td><span class="tag purple">Lv.${v.level}</span></td>
+        <td>${driver ? `${driver.avatar} ${driver.name}` : '<span style="color:var(--text-muted)">Trống</span>'}</td>
+        <td>${v.totalTrips || 0}</td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="sellVehicle('${v.id}')"><i class="fas fa-dollar-sign"></i></button>
+        </td>
+      </tr>`;
+    });
+    ownedHtml += '</tbody></table>';
+  }
+  document.getElementById('owned-vehicles').innerHTML = ownedHtml;
+}
+
+function renderDrivers() {
+  // Driver pool
+  let poolHtml = '';
+  document.getElementById('hired-count').textContent = G.drivers.length;
+
+  if(G.driverPool.length === 0) {
+    poolHtml = '<div class="empty-state"><p>Hết ứng viên. Làm mới để tìm người mới.</p></div>';
+  }
+
+  G.driverPool.forEach(d => {
+    poolHtml += `<div class="driver-card">
+      <div class="driver-avatar">${d.avatar}</div>
+      <div class="driver-name">${d.name}</div>
+      <div class="driver-role">${d.personality} · Lương: ${fmt(d.salary)}/ngày</div>
+      <div class="driver-skills">
+        <div class="skill-row">
+          <span>Kỹ năng</span>
+          <div class="progress"><div class="progress-fill blue" style="width:${d.skill}%"></div></div>
+          <span style="width:25px;text-align:right;font-weight:600">${d.skill}</span>
+        </div>
+        <div class="skill-row">
+          <span>Kinh nghiệm</span>
+          <div class="progress"><div class="progress-fill purple" style="width:${d.experience}%"></div></div>
+          <span style="width:25px;text-align:right;font-weight:600">${d.experience}</span>
+        </div>
+      </div>
+      <button class="btn btn-success btn-sm" style="width:100%;margin-top:0.8rem" onclick="hireDriver('${d.id}')">
+        <i class="fas fa-user-plus"></i> Thuê (${fmt(d.salary*2)})
+      </button>
+    </div>`;
+  });
+  document.getElementById('driver-pool').innerHTML = poolHtml;
+
+  // Hired drivers
+  let hiredHtml = '';
+  if(G.drivers.length === 0) {
+    hiredHtml = '<div class="empty-state"><i class="fas fa-users"></i><p>Chưa có tài xế</p></div>';
+  } else {
+    hiredHtml = '<table class="data-table"><thead><tr><th>Tài xế</th><th>Kỹ năng</th><th>KN</th><th>Trạng thái</th><th>Xe</th><th>Chuyến</th><th>Thu nhập</th><th></th></tr></thead><tbody>';
+    G.drivers.forEach(d => {
+      let vehicle = d.assigned ? G.vehicles.find(v => v.id === d.assigned) : null;
+      let status = d.onRide ? '<span class="tag green">Đang chạy</span>' :
+                  (d.assigned ? '<span class="tag blue">Sẵn sàng</span>' : '<span class="tag red">Chưa có xe</span>');
+
+      // Vehicle assignment select
+      let selectHtml = `<select style="background:var(--bg-glass);border:1px solid var(--border-glass);color:var(--text-primary);padding:0.3rem;border-radius:6px;font-size:0.75rem" onchange="assignDriverToVehicle('${d.id}', this.value)">
+        <option value="">-- Chọn xe --</option>`;
+      G.vehicles.forEach(v => {
+        let assigned = G.drivers.some(dr => dr.assigned === v.id && dr.id !== d.id);
+        selectHtml += `<option value="${v.id}" ${d.assigned === v.id ? 'selected' : ''} ${assigned ? 'disabled' : ''}>${v.emoji} ${v.name}</option>`;
+      });
+      selectHtml += `</select>`;
+
+      hiredHtml += `<tr>
+        <td><span style="font-size:1.2rem">${d.avatar}</span> ${d.name}</td>
+        <td><div class="progress" style="width:60px"><div class="progress-fill blue" style="width:${d.skill}%"></div></div></td>
+        <td>${d.experience}</td>
+        <td>${status}</td>
+        <td>${selectHtml}</td>
+        <td>${d.tripsCompleted}</td>
+        <td style="color:var(--green)">${fmt(d.earnings)}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="trainDriver('${d.id}')" title="Đào tạo"><i class="fas fa-graduation-cap"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="fireDriver('${d.id}')" title="Sa thải"><i class="fas fa-user-minus"></i></button>
+        </td>
+      </tr>`;
+    });
+    hiredHtml += '</tbody></table>';
+  }
+  document.getElementById('hired-drivers').innerHTML = hiredHtml;
+}
+
+function renderGarage() {
+  let html = '';
+  document.getElementById('garage-slots').textContent = G.garageSlots;
+
+  for(let i = 0; i < G.garageSlots; i++) {
+    let v = G.vehicles[i];
+    if(v) {
+      let vType = VEHICLE_TYPES.find(x => x.id === v.type);
+      let condColor = v.condition > 70 ? 'var(--green)' : v.condition > 30 ? 'var(--accent)' : 'var(--red)';
+      let repairCost = Math.floor((100 - v.condition) * 30);
+      if(G.research.maintenance) repairCost = Math.floor(repairCost * 0.7);
+      let upgradeCost = v.level * 3000;
+
+      html += `<div class="garage-slot occupied">
+        <div class="garage-vehicle-emoji">${v.emoji}</div>
+        <div style="font-weight:700;margin-bottom:0.3rem">${v.name}</div>
+        <div class="tag purple" style="margin-bottom:0.5rem">Lv.${v.level}</div>
+        <div style="width:100%;margin-bottom:0.3rem">
+          <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-secondary);margin-bottom:0.3rem">
+            <span>Tình trạng</span>
+            <span style="color:${condColor};font-weight:600">${v.condition}%</span>
+          </div>
+          <div class="progress"><div class="progress-fill" style="width:${v.condition}%;background:${condColor}"></div></div>
+        </div>
+        <div style="display:flex;gap:0.4rem;margin-top:0.8rem;width:100%">
+          <button class="btn btn-success btn-sm" style="flex:1" onclick="repairVehicle('${v.id}')" ${v.condition>=100?'disabled':''}>
+            <i class="fas fa-wrench"></i> ${fmt(repairCost)}
+          </button>
+          <button class="btn btn-primary btn-sm" style="flex:1" onclick="upgradeVehicle('${v.id}')" ${v.level>=5?'disabled':''}>
+            <i class="fas fa-arrow-up"></i> ${fmt(upgradeCost)}
+          </button>
+        </div>
+      </div>`;
+    } else {
+      html += `<div class="garage-slot empty" onclick="switchPage('fleet')">
+        <i class="fas fa-plus" style="font-size:2rem;color:var(--text-muted);margin-bottom:0.5rem"></i>
+        <div style="font-size:0.85rem;color:var(--text-muted)">Slot trống</div>
+      </div>`;
+    }
+  }
+  document.getElementById('garage-grid').innerHTML = html;
+}
+
+function renderDispatch() {
+  // Ride requests
+  let reqHtml = '';
+  if(G.rideRequests.length === 0) {
+    reqHtml = '<div class="empty-state"><i class="fas fa-clock"></i><p>Đang chờ khách...</p></div>';
+  }
+  G.rideRequests.forEach(r => {
+    reqHtml += `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.8rem;border-radius:10px;background:var(--bg-glass);margin-bottom:0.5rem;border:1px solid var(--border-glass)">
+      <div>
+        <div style="font-size:0.85rem;font-weight:600">${r.isVIP ? '👑 ' : ''}${r.from} → ${r.to}</div>
+        <div style="font-size:0.72rem;color:var(--text-secondary)">${r.distance}km · ${r.passengers} khách · ${r.time}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <span style="font-weight:700;color:var(--green);font-size:0.9rem">${fmt(r.fare)}</span>
+        <button class="btn btn-primary btn-sm" onclick="assignRide('${r.id}')"><i class="fas fa-check"></i></button>
+      </div>
+    </div>`;
+  });
+  document.getElementById('ride-requests').innerHTML = reqHtml;
+
+  // Active rides
+  let ridesHtml = '';
+  if(G.activeRides.length === 0) {
+    ridesHtml = '<div class="empty-state"><i class="fas fa-taxi"></i><p>Không có xe nào đang chạy</p></div>';
+  }
+  G.activeRides.forEach(r => {
+    let pct = Math.floor((r.progress / r.duration) * 100);
+    ridesHtml += `<div style="padding:0.8rem;border-radius:10px;background:var(--bg-glass);margin-bottom:0.5rem;border:1px solid var(--border-glass)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+        <div>
+          <div style="font-size:0.82rem;font-weight:600">🚕 ${r.driverName}</div>
+          <div style="font-size:0.72rem;color:var(--text-secondary)">${r.from} → ${r.to}</div>
+        </div>
+        <span style="color:var(--green);font-weight:600">${fmt(r.fare)}</span>
+      </div>
+      <div class="progress"><div class="progress-fill green" style="width:${pct}%"></div></div>
+      <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:0.3rem">${pct}% hoàn thành</div>
+    </div>`;
+  });
+  document.getElementById('active-rides').innerHTML = ridesHtml;
+}
+
+function renderFinance() {
+  let net = G.stats.totalIncome - G.stats.totalExpense;
+  let statsHtml = `
+    <div class="stat-card money">
+      <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+      <div class="stat-value">${fmt(G.money)}</div>
+      <div class="stat-label">Số dư</div>
+    </div>
+    <div class="stat-card trips">
+      <div class="stat-icon"><i class="fas fa-arrow-up"></i></div>
+      <div class="stat-value" style="color:var(--green)">${fmt(G.stats.totalIncome)}</div>
+      <div class="stat-label">Tổng thu</div>
+    </div>
+    <div class="stat-card fleet">
+      <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
+      <div class="stat-value" style="color:var(--red)">${fmt(G.stats.totalExpense)}</div>
+      <div class="stat-label">Tổng chi</div>
+    </div>
+    <div class="stat-card rating">
+      <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+      <div class="stat-value" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmt(net)}</div>
+      <div class="stat-label">Lợi nhuận</div>
+    </div>
+  `;
+  document.getElementById('finance-stats').innerHTML = statsHtml;
+
+  // Income breakdown
+  let incHtml = `
+    <div style="display:flex;flex-direction:column;gap:0.5rem">
+      <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
+        <span style="font-size:0.85rem">🚕 Cước phí</span>
+        <span style="font-weight:600;color:var(--green)">${fmt(G.stats.totalIncome)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
+        <span style="font-size:0.85rem">📊 Kỷ lục ngày</span>
+        <span style="font-weight:600;color:var(--accent)">${fmt(G.stats.bestDay)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0.5rem 0;">
+        <span style="font-size:0.85rem">👥 Khách phục vụ</span>
+        <span style="font-weight:600">${fmtNum(G.stats.customersServed)}</span>
+      </div>
+    </div>
+  `;
+  document.getElementById('income-breakdown').innerHTML = incHtml;
+
+  // Expense breakdown
+  let expHtml = `
+    <div style="display:flex;flex-direction:column;gap:0.5rem">
+      <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
+        <span style="font-size:0.85rem">⛽ Nhiên liệu</span>
+        <span style="font-weight:600;color:var(--red)">${fmt(G.stats.fuelSpent)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
+        <span style="font-size:0.85rem">👨‍✈️ Lương tài xế</span>
+        <span style="font-weight:600;color:var(--red)">${fmt(G.stats.driverPayments)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
+        <span style="font-size:0.85rem">🔧 Bảo trì</span>
+        <span style="font-weight:600;color:var(--red)">${fmt(G.stats.maintenanceCost)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:0.5rem 0;">
+        <span style="font-size:0.85rem">📢 Marketing</span>
+        <span style="font-weight:600;color:var(--red)">${fmt(G.stats.marketingSpent)}</span>
+      </div>
+    </div>
+  `;
+  document.getElementById('expense-breakdown').innerHTML = expHtml;
+
+  // Bank options
+  let bankHtml = `
+    <div class="card" style="text-align:center">
+      <div style="font-size:2rem;margin-bottom:0.5rem">🏦</div>
+      <div style="font-weight:700;margin-bottom:0.3rem">Vay nhỏ</div>
+      <div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.8rem">$10,000 · 5%/tháng</div>
+      <button class="btn btn-primary btn-sm" onclick="takeLoan(10000,0.05,30)">Vay ngay</button>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:2rem;margin-bottom:0.5rem">💎</div>
+      <div style="font-weight:700;margin-bottom:0.3rem">Vay vừa</div>
+      <div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.8rem">$50,000 · 8%/tháng</div>
+      <button class="btn btn-primary btn-sm" onclick="takeLoan(50000,0.08,30)">Vay ngay</button>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:2rem;margin-bottom:0.5rem">👑</div>
+      <div style="font-weight:700;margin-bottom:0.3rem">Vay lớn</div>
+      <div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.8rem">$200,000 · 12%/tháng</div>
+      <button class="btn btn-primary btn-sm" onclick="takeLoan(200000,0.12,30)">Vay ngay</button>
+    </div>
+  `;
+  document.getElementById('bank-options').innerHTML = bankHtml;
+
+  // Active loans
+  if(G.loans.length > 0) {
+    let loansHtml = '<div class="card" style="margin-top:1rem"><div class="card-header"><div class="card-title"><i class="fas fa-hand-holding-usd"></i> Khoản vay</div></div>';
+    G.loans.forEach(l => {
+      loansHtml += `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0;border-bottom:1px solid var(--border-glass)">
+        <div>
+          <div style="font-size:0.85rem;font-weight:600">${fmt(l.amount)}</div>
+          <div style="font-size:0.72rem;color:var(--text-secondary)">Lãi suất: ${(l.rate*100).toFixed(0)}% · Còn ${l.daysLeft} ngày</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="payLoan('${l.id}')"><i class="fas fa-money-bill"></i> Trả nợ</button>
+      </div>`;
+    });
+    loansHtml += '</div>';
+    document.getElementById('bank-options').insertAdjacentHTML('afterend', loansHtml);
+  }
+}
+
+function renderContracts() {
+  let html = '';
+  if(G.contracts.length === 0) {
+    html = '<div class="empty-state"><i class="fas fa-file-contract"></i><p>Không có hợp đồng. Nhấn làm mới!</p></div>';
+  }
+  G.contracts.forEach(c => {
+    html += `<div class="contract-card" style="margin-bottom:0.8rem">
+      <div class="contract-icon">${c.icon}</div>
+      <div class="contract-info">
+        <div class="contract-name">${c.name}</div>
+        <div class="contract-details">${c.desc} · ${c.duration} ngày</div>
+      </div>
+      <div class="contract-payout">${fmt(c.payout)}</div>
+      <button class="btn btn-primary btn-sm" onclick="acceptContract('${c.id}')">Nhận</button>
+    </div>`;
+  });
+  document.getElementById('contracts-list').innerHTML = html;
+
+  // Active contracts
+  let activeHtml = '';
+  if(G.activeContracts.length === 0) {
+    activeHtml = '<div class="empty-state"><p>Chưa nhận hợp đồng nào</p></div>';
+  }
+  G.activeContracts.forEach(c => {
+    let pct = Math.floor((c.progress / c.trips) * 100);
+    activeHtml += `<div class="contract-card" style="margin-bottom:0.8rem">
+      <div class="contract-icon">${c.icon}</div>
+      <div class="contract-info" style="flex:1">
+        <div class="contract-name">${c.name}</div>
+        <div class="contract-details">${c.progress}/${c.trips} chuyến · Còn ${c.daysLeft} ngày</div>
+        <div class="progress" style="margin-top:0.4rem"><div class="progress-fill green" style="width:${pct}%"></div></div>
+      </div>
+      <div class="contract-payout">${fmt(c.payout)}</div>
+      ${c.completed ? '<span class="tag green">✅ Hoàn thành</span>' : ''}
+    </div>`;
+  });
+  document.getElementById('active-contracts').innerHTML = activeHtml;
+}
+
+function renderMissions() {
+  let html = '';
+  G.missions.forEach(m => {
+    let pct = Math.min(100, Math.floor((m.progress / m.target) * 100));
+    html += `<div class="mission-card ${m.completed ? 'completed' : 'active-mission'}">
+      <div class="mission-emoji">${m.emoji}</div>
+      <div class="mission-title">${m.title}</div>
+      <div class="mission-desc">${m.desc}</div>
+      <div class="mission-reward"><i class="fas fa-coins"></i> ${fmt(m.reward)}</div>
+      <div class="mission-progress">
+        <div class="mission-progress-text">
+          <span>Tiến độ</span>
+          <span>${typeof m.progress === 'number' ? (m.type === 'rep' ? m.progress.toFixed(1) : Math.floor(m.progress)) : 0} / ${m.type === 'rep' ? m.target.toFixed(1) : m.target}</span>
+        </div>
+        <div class="progress"><div class="progress-fill ${m.completed ? 'green' : 'accent'}" style="width:${pct}%"></div></div>
+      </div>
+      ${m.completed ? '<div class="tag green" style="margin-top:0.5rem">✅ Hoàn thành</div>' : ''}
+    </div>`;
+  });
+  document.getElementById('missions-grid').innerHTML = html;
+}
+
+function renderResearch() {
+  let html = '';
+  document.getElementById('research-points').textContent = G.stats.researchPoints || 0;
+
+  RESEARCH_TREE.forEach(r => {
+    let unlocked = G.research[r.id];
+    let available = !unlocked && r.requires.every(req => G.research[req]);
+    let canAfford = G.money >= r.cost;
+
+    html += `<div class="research-node ${unlocked ? 'unlocked' : (available ? 'available' : 'locked')}"
+      ${available && canAfford ? `onclick="unlockResearch('${r.id}')"` : ''}>
+      <div class="research-icon">${r.emoji}</div>
+      <div class="research-name">${r.name}</div>
+      <div class="research-desc">${r.desc}</div>
+      ${unlocked
+        ? '<span class="tag green"><i class="fas fa-check"></i> Đã mở</span>'
+        : `<div class="research-cost">${fmt(r.cost)}</div>`
+      }
+      ${!unlocked && r.requires.length > 0 && !available
+        ? `<div style="font-size:0.65rem;color:var(--text-muted);margin-top:0.3rem">Yêu cầu: ${r.requires.join(', ')}</div>`
+        : ''
+      }
+    </div>`;
+  });
+  document.getElementById('research-tree').innerHTML = html;
+}
+
+function renderMarketing() {
+  let campHtml = '';
+  MARKETING_CAMPAIGNS.forEach(c => {
+    let active = G.marketingActive[c.id] && G.marketingActive[c.id].daysLeft > 0;
+    campHtml += `<div class="card" style="text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">${c.emoji}</div>
+      <div style="font-weight:700;margin-bottom:0.3rem">${c.name}</div>
+      <div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.5rem">${c.desc}</div>
+      <div style="display:flex;justify-content:center;gap:0.5rem;margin-bottom:0.8rem">
+        <span class="tag green">+${c.effect.demand}% nhu cầu</span>
+        <span class="tag accent">+${c.effect.rep} rep</span>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.5rem">${c.duration} ngày · ${fmt(c.cost)}</div>
+      ${active
+        ? `<span class="tag blue">Đang chạy (${G.marketingActive[c.id].daysLeft} ngày)</span>`
+        : `<button class="btn btn-primary btn-sm" onclick="startCampaign('${c.id}')"><i class="fas fa-play"></i> Bắt đầu</button>`
+      }
+    </div>`;
+  });
+  document.getElementById('marketing-campaigns').innerHTML = campHtml;
+
+  // Marketing stats
+  let statsHtml = `<div style="display:flex;gap:1rem;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px">
+      <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.3rem">Tổng chi marketing</div>
+      <div style="font-size:1.3rem;font-weight:700;color:var(--accent)">${fmt(G.stats.marketingSpent)}</div>
+    </div>
+    <div style="flex:1;min-width:200px">
+      <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.3rem">Chiến dịch đang chạy</div>
+      <div style="font-size:1.3rem;font-weight:700">${Object.values(G.marketingActive).filter(m => m.daysLeft > 0).length}</div>
+    </div>
+  </div>`;
+  document.getElementById('marketing-stats').innerHTML = statsHtml;
+}
+
+function renderAchievements() {
+  let html = '';
+  ACHIEVEMENTS_LIST.forEach(a => {
+    let unlocked = G.achievements[a.id];
+    html += `<div class="card" style="text-align:center;${unlocked ? '' : 'opacity:0.4'}">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">${a.emoji}</div>
+      <div style="font-weight:700;font-size:0.95rem;margin-bottom:0.3rem">${a.name}</div>
+      <div style="font-size:0.78rem;color:var(--text-secondary)">${a.desc}</div>
+      ${unlocked ? '<div class="tag green" style="margin-top:0.5rem"><i class="fas fa-check"></i> Đã đạt</div>' : ''}
+    </div>`;
+  });
+  document.getElementById('achievements-grid').innerHTML = html;
+}
+
+function renderNotifications() {
+  let html = '';
+  G.notifications.forEach(n => {
+    html += `<div class="notification-item">
+      <div class="notif-icon">${n.icon}</div>
+      <div class="notif-title">${n.title}</div>
+      <div class="notif-text">${n.text}</div>
+      <div class="notif-time">${n.time}</div>
+    </div>`;
+  });
+  document.getElementById('notif-list').innerHTML = html || '<div class="empty-state"><p>Không có thông báo</p></div>';
+}
+
+// === UI FUNCTIONS ===
+function updateHeaderUI() {
+  document.getElementById('header-money').textContent = fmt(G.money);
+  document.getElementById('header-rep').textContent = G.reputation.toFixed(1);
+  document.getElementById('header-day').textContent = G.day;
+  document.getElementById('level-badge').textContent = 'LV ' + G.level;
+  document.getElementById('xp-fill').style.width = (G.xp / G.xpNeeded * 100) + '%';
+  document.getElementById('company-name-display').textContent = G.companyName;
+
+  let timeStr = `${String(G.hour).padStart(2,'0')}:${String(G.minute).padStart(2,'0')}`;
+  document.getElementById('time-display').textContent = timeStr;
+  let timeIcon = G.hour >= 6 && G.hour < 12 ? '🌅' : G.hour >= 12 && G.hour < 18 ? '☀️' : G.hour >= 18 && G.hour < 21 ? '🌇' : '🌙';
+  document.getElementById('time-icon').textContent = timeIcon;
+}
+
+const PAGE_TITLES = {
+  dashboard: '<i class="fas fa-chart-pie"></i> Bảng điều khiển',
+  city: '<i class="fas fa-map-marked-alt"></i> Bản đồ thành phố',
+  fleet: '<i class="fas fa-car-side"></i> Đội xe',
+  drivers: '<i class="fas fa-id-card"></i> Tài xế',
+  garage: '<i class="fas fa-wrench"></i> Garage',
+  dispatch: '<i class="fas fa-headset"></i> Điều phối',
+  finance: '<i class="fas fa-chart-line"></i> Tài chính',
+  contracts: '<i class="fas fa-file-contract"></i> Hợp đồng',
+  missions: '<i class="fas fa-bullseye"></i> Nhiệm vụ',
+  research: '<i class="fas fa-flask"></i> Nghiên cứu',
+  marketing: '<i class="fas fa-bullhorn"></i> Marketing',
+  achievements: '<i class="fas fa-trophy"></i> Thành tựu',
+  settings: '<i class="fas fa-cog"></i> Cài đặt',
+};
+
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
+  document.getElementById('page-title').innerHTML = PAGE_TITLES[page] || page;
+
+  // Render page-specific content
+  switch(page) {
+    case 'dashboard': renderDashboard(); break;
+    case 'city': renderCityMap(); break;
+    case 'fleet': renderFleet(); break;
+    case 'drivers': renderDrivers(); break;
+    case 'garage': renderGarage(); break;
+    case 'dispatch': renderDispatch(); break;
+    case 'finance': renderFinance(); break;
+    case 'contracts': renderContracts(); break;
+    case 'missions': renderMissions(); break;
+    case 'research': renderResearch(); break;
+    case 'marketing': renderMarketing(); break;
+    case 'achievements': renderAchievements(); break;
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+function toggleNotifications() {
+  let panel = document.getElementById('notif-panel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open')) renderNotifications();
+}
+
+function updateCompanyName() {
+  G.companyName = document.getElementById('company-name-input').value || 'Taxi Empire';
+  document.getElementById('company-name-display').textContent = G.companyName;
+}
+
+
+// === EXTRA FEATURES ===
+
+// === EXTRA FEATURES ===
+function claimDailyBonus() {
+  const today = new Date().toDateString();
+  if(G.lastDailyBonus === today) {
+    showNotif('Bạn đã nhận thưởng hôm nay rồi!');
+    return;
+  }
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  G.dailyBonusStreak = (G.lastDailyBonus === yesterday) ? (G.dailyBonusStreak || 0) + 1 : 1;
+  G.lastDailyBonus = today;
+  const dayIdx = Math.min((G.dailyBonusStreak - 1) % 7, 6);
+  const rewards = [800, 1200, 1800, 2500, 3500, 5000, 10000];
+  const xpRewards = [20, 30, 40, 50, 70, 90, 150];
+  const money = Math.floor(rewards[dayIdx] * Math.max(1, G.level / 3));
+  G.money += money;
+  gainXP(xpRewards[dayIdx]);
+  showNotif('🎁 Thưởng ngày ' + G.dailyBonusStreak + ': +' + fmt(money));
+  addNotification('🎁', 'Thưởng hàng ngày', 'Streak ' + G.dailyBonusStreak + ' · +' + fmt(money));
+  updateHeaderUI();
+  if(document.querySelector('.page.active')?.id === 'page-dashboard') renderDashboard();
+}
+
+function repairAllVehicles() {
+  let total = 0;
+  G.vehicles.forEach(v => {
+    if(v.condition >= 100) return;
+    let vType = VEHICLE_TYPES.find(t => t.id === v.type);
+    let cost = Math.floor((100 - v.condition) * (vType ? vType.maintenance : 3) * 15);
+    total += cost;
+  });
+  if(total <= 0) { showNotif('Tất cả xe đều tốt!'); return; }
+  if(G.money < total) { showNotif('Cần ' + fmt(total) + ' để sửa hết!'); return; }
+  if(!confirm('Sửa tất cả xe với ' + fmt(total) + '?')) return;
+  G.money -= total;
+  G.stats.maintenanceCost = (G.stats.maintenanceCost || 0) + total;
+  G.vehicles.forEach(v => { v.condition = 100; });
+  showNotif('🔧 Đã sửa hết xe · -' + fmt(total));
+  renderFleet();
+  renderGarage();
+  updateHeaderUI();
+}
+
+function buyInsurance() {
+  if(G.insurance) { showNotif('Đã có bảo hiểm!'); return; }
+  const cost = 15000;
+  if(G.money < cost) { showNotif('Không đủ tiền!'); return; }
+  G.money -= cost;
+  G.insurance = true;
+  showNotif('🛡️ Đã mua bảo hiểm toàn diện!');
+  addNotification('🛡️', 'Bảo hiểm', 'Giảm 50% hao mòn xe');
+  updateHeaderUI();
+}
+
+function refreshDriverPool() {
+  const cost = 500;
+  if(G.money < cost) { showNotif('Cần $500 để làm mới!'); return; }
+  G.money -= cost;
+  generateDriverPool();
+  showNotif('Đã làm mới ứng viên · -$500');
+  renderDrivers();
+  updateHeaderUI();
+}
+
+// === SAVE/LOAD ===
+function migrateGameData(data) {
+  G = data;
+  if(!G.stats) G.stats = {totalIncome:0,totalExpense:0,tripsToday:0,bestDay:0,customersServed:0,fuelSpent:0,maintenanceCost:0,driverPayments:0,marketingSpent:0,researchPoints:0};
+  if(G.stats.researchPoints == null) G.stats.researchPoints = 0;
+  if(!G.marketingActive) G.marketingActive = {};
+  if(!G.loans) G.loans = [];
+  if(!G.contracts) G.contracts = [];
+  if(!G.activeContracts) G.activeContracts = [];
+  if(!G.vehicles) G.vehicles = G.fleet || [];
+  if(!G.drivers) G.drivers = [];
+  if(!G.driverPool) G.driverPool = [];
+  if(!G.rideRequests) G.rideRequests = [];
+  if(!G.activeRides) G.activeRides = [];
+  if(!G.missions) generateMissions();
+  if(!G.research) G.research = {};
+  if(!G.achievements) G.achievements = {};
+  if(!G.notifications) G.notifications = [];
+  if(G.garageSlots == null) G.garageSlots = 5;
+  if(G.insurance == null) G.insurance = false;
+  if(G.dailyBonusStreak == null) G.dailyBonusStreak = 0;
+  // Ensure drivers have required fields
+  G.drivers.forEach(d => {
+    if(d.onRide == null) d.onRide = false;
+    if(d.tripsCompleted == null) d.tripsCompleted = 0;
+    if(d.earnings == null) d.earnings = 0;
+  });
+  initResearch();
+}
+
+function saveGame() {
+  try {
+    localStorage.setItem(storageKey(), JSON.stringify(G));
+    localStorage.setItem('taxiEmpireSave', JSON.stringify(G));
+    saveGameCloud().then(ok => {
+      showNotif(ok ? 'Đã lưu cloud ✓' : 'Đã lưu máy (cloud lỗi)');
+    });
+  } catch(e) { showNotif('Lỗi lưu game!'); }
+}
+
+async function loadGame() {
+  try {
+    let cloud = await loadGameCloud();
+    let local = null;
+    try {
+      local = JSON.parse(localStorage.getItem(storageKey()) || localStorage.getItem('taxiEmpireSave') || 'null');
+    } catch(e) {}
+    const score = s => s ? (s.day||0)*1e9 + (s.totalTrips||0)*1e4 + (s.money||0) : -1;
+    const best = score(cloud) >= score(local) ? cloud : local;
+    if(best && score(best) > 0) {
+      migrateGameData(best);
+      startGame();
+      showNotif('Đã tải game!');
+    } else {
+      showNotif('Không có dữ liệu đã lưu');
+    }
+  } catch(e) {
+    console.error(e);
+    showNotif('Lỗi tải game!');
+  }
+}
+
+function resetGame() {
+  if(confirm('Bạn chắc chắn muốn xóa tất cả dữ liệu?')) {
+    localStorage.removeItem(storageKey());
+    localStorage.removeItem('taxiEmpireSave');
+    if(currentUser) {
+      fbDB.ref('users/' + currentUser.uid + '/game').remove();
+      fbDB.ref('leaderboard/' + currentUser.uid).remove();
+    }
+    location.reload();
+  }
+}
+
+// === START GAME ===
+function startNewGame() {
+  init();
+  startGame();
+}
+
+function startGame() {
+  document.getElementById('start-screen').classList.remove('active');
+  document.getElementById('game-container').classList.add('active');
+  const cni = document.getElementById('company-name-input');
+  if(cni) cni.value = G.companyName || 'Taxi Empire';
+  autoAssignVehicles();
+  updateHeaderUI();
+  renderDashboard();
+  startGameLoop();
+
+  // Welcome notification
+  if(G.day === 1 && G.totalTrips === 0) {
+    addNotification('🎉', 'Chào mừng!', 'Bắt đầu xây dựng đế chế taxi của bạn!');
+    addNotification('💡', 'Gợi ý', 'Mua xe đầu tiên và thuê tài xế để bắt đầu.');
+  }
+}
+
+// === LOADING & INIT ===
+window.addEventListener('load', () => {
+  // Create particles
+  let particlesContainer = document.getElementById('particles');
+  if(particlesContainer) {
+    for(let i = 0; i < 30; i++) {
+      let p = document.createElement('div');
+      p.className = 'particle';
+      let size = rand(5, 20);
+      p.style.width = size + 'px';
+      p.style.height = size + 'px';
+      p.style.left = rand(0, 100) + '%';
+      p.style.animationDelay = rand(0, 15) + 's';
+      p.style.animationDuration = rand(10, 25) + 's';
+      particlesContainer.appendChild(p);
+    }
+  }
+
+  fbAuth.onAuthStateChanged(async (user) => {
+    if(!user) {
+      document.getElementById('loading-screen').classList.add('hidden');
+      document.getElementById('login-screen').classList.add('active');
+      document.getElementById('start-screen').classList.remove('active');
+      return;
+    }
+    currentUser = user;
+    await ensureProfile(user);
+    document.getElementById('login-screen').classList.remove('active');
+
+    // header user
+    const ub = document.getElementById('user-bar-name');
+    if(ub) ub.textContent = userProfile?.displayName || user.email.split('@')[0];
+    const adminLink = document.getElementById('admin-nav-link');
+    if(adminLink && userProfile?.role === 'admin') adminLink.style.display = '';
+
+    // Check save
+    const hasLocal = localStorage.getItem(storageKey()) || localStorage.getItem('taxiEmpireSave');
+    let hasCloud = false;
+    try {
+      const snap = await fbDB.ref('users/' + user.uid + '/game').once('value');
+      hasCloud = snap.exists();
+    } catch(e) {}
+    if(hasLocal || hasCloud) {
+      document.getElementById('btn-continue').style.display = '';
+    }
+
+    setTimeout(() => {
+      document.getElementById('loading-screen').classList.add('hidden');
+      document.getElementById('start-screen').classList.add('active');
+    }, 800);
+  });
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') {
+    closeModal();
+    document.getElementById('notif-panel').classList.remove('open');
+  }
+  if(e.key === ' ' && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault();
+    setSpeed(G.speed === 0 ? 1 : 0);
+  }
+  if(e.key >= '1' && e.key <= '3') {
+    setSpeed(parseInt(e.key));
+  }
+});
+
+// Auto-save every 30 seconds
+setInterval(() => {
+  if(document.getElementById('game-container').classList.contains('active')) {
+    try {
+      localStorage.setItem(storageKey(), JSON.stringify(G));
+      localStorage.setItem('taxiEmpireSave', JSON.stringify(G));
+    } catch(e) {}
+    saveGameCloud();
+  }
+}, 30000);
+
+window.addEventListener('beforeunload', () => {
+  try {
+    localStorage.setItem(storageKey(), JSON.stringify(G));
+  } catch(e) {}
+});
+</script>
+
+</body>
+</html>
