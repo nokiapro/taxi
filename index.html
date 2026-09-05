@@ -729,7 +729,7 @@ body {
       <div class="login-error" id="login-error"></div>
       <button type="submit" class="btn-start primary" id="login-btn">Đăng nhập</button>
     </form>
-    <div class="login-footer">Firebase Auth · v2.3.1<br>Không có đăng ký công khai</div>
+    <div class="login-footer">Firebase Auth · v2.3.2<br>Không có đăng ký công khai</div>
   </div>
 </div>
 
@@ -832,7 +832,7 @@ body {
       <div class="user-bar" style="margin-top:0.5rem">
         <i class="fas fa-user"></i>
         <span class="ub-name" id="user-bar-name">Player</span>
-        <span style="margin-left:auto;font-size:0.65rem;color:var(--text-muted)">v2.3.1</span>
+        <span style="margin-left:auto;font-size:0.65rem;color:var(--text-muted)">v2.3.2</span>
       </div>
       <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
     </div>
@@ -1152,7 +1152,7 @@ const fbAuth = firebase.auth();
 const fbDB = firebase.database();
 let currentUser = null;
 let userProfile = null;
-const APP_VERSION = "2.3.1";
+const APP_VERSION = "2.3.2";
 
 function storageKey() {
   return currentUser ? "taxiEmpireSave_" + currentUser.uid : "taxiEmpireSave";
@@ -1200,7 +1200,12 @@ async function ensureProfile(user) {
 async function saveGameCloud() {
   if (!currentUser) return false;
   try {
-    const clean = JSON.parse(JSON.stringify(G));
+    // Strip NaN/undefined before Firebase
+    const clean = JSON.parse(JSON.stringify(G, (k, v) => {
+      if(typeof v === 'number' && !Number.isFinite(v)) return 0;
+      if(v === undefined) return null;
+      return v;
+    }));
     clean.savedAt = Date.now();
     clean.version = APP_VERSION;
     await fbDB.ref("users/" + currentUser.uid + "/game").set(clean);
@@ -1405,16 +1410,21 @@ const WEATHERS = [
 ];
 
 // === UTILITY FUNCTIONS ===
+const num = (n, fallback = 0) => {
+  const v = Number(n);
+  return Number.isFinite(v) ? v : fallback;
+};
 const fmt = n => {
-  if(n >= 1000000) return '$' + (n/1000000).toFixed(2) + 'M';
-  if(n >= 1000) return '$' + (n/1000).toFixed(1) + 'K';
+  n = num(n, 0);
+  if(Math.abs(n) >= 1000000) return '$' + (n/1000000).toFixed(2) + 'M';
+  if(Math.abs(n) >= 1000) return '$' + (n/1000).toFixed(1) + 'K';
   return '$' + Math.floor(n).toLocaleString();
 };
-const fmtNum = n => Math.floor(n).toLocaleString();
+const fmtNum = n => Math.floor(num(n, 0)).toLocaleString();
 const rand = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
 const pick = arr => arr[Math.floor(Math.random()*arr.length)];
 const uid = () => Date.now().toString(36) + Math.random().toString(36).substr(2,5);
-const clamp = (v,min,max) => Math.max(min, Math.min(max, v));
+const clamp = (v,min,max) => { v = num(v,min); return Math.max(min, Math.min(max, v)); };
 
 // === INITIALIZATION ===
 function init() {
@@ -1541,31 +1551,36 @@ function gameTick() {
 }
 
 function endOfDay() {
+  if(!G.stats) G.stats = {};
+  if(!Array.isArray(G.drivers)) G.drivers = [];
+  if(!Array.isArray(G.loans)) G.loans = [];
+  if(!Array.isArray(G.revenueHistory)) G.revenueHistory = [0,0,0,0,0,0,0];
+
   // Pay driver salaries
   let salaryTotal = 0;
-  G.drivers.forEach(d => { salaryTotal += d.salary; });
-  G.money -= salaryTotal;
-  G.stats.driverPayments += salaryTotal;
-  G.dailyExpenses += salaryTotal;
+  G.drivers.forEach(d => { salaryTotal += num(d.salary, 0); });
+  G.money = num(G.money) - salaryTotal;
+  G.stats.driverPayments = num(G.stats.driverPayments) + salaryTotal;
+  G.dailyExpenses = num(G.dailyExpenses) + salaryTotal;
 
   // Record revenue
-  G.revenueHistory.push(G.dailyEarnings);
+  G.revenueHistory.push(num(G.dailyEarnings));
   if(G.revenueHistory.length > 7) G.revenueHistory.shift();
-  if(G.dailyEarnings > G.stats.bestDay) G.stats.bestDay = G.dailyEarnings;
+  if(num(G.dailyEarnings) > num(G.stats.bestDay)) G.stats.bestDay = num(G.dailyEarnings);
 
   // XP gain
-  let xpGain = Math.floor(G.dailyTrips * 5 + G.dailyEarnings * 0.01);
+  let xpGain = Math.floor(num(G.dailyTrips) * 5 + num(G.dailyEarnings) * 0.01);
   gainXP(xpGain);
 
   // Research points
-  let rp = Math.floor(G.dailyTrips * 0.5 + G.level * 2);
-  G.stats.researchPoints = (G.stats.researchPoints || 0) + rp;
+  let rp = Math.floor(num(G.dailyTrips) * 0.5 + num(G.level, 1) * 2);
+  G.stats.researchPoints = num(G.stats.researchPoints) + rp;
 
   // Loan interest
   G.loans.forEach(l => {
-    let interest = l.amount * l.rate / 30;
-    G.money -= interest;
-    G.dailyExpenses += interest;
+    let interest = num(l.amount) * num(l.rate, 0.05) / 30;
+    G.money = num(G.money) - interest;
+    G.dailyExpenses = num(G.dailyExpenses) + interest;
   });
 
   // Contract deadline check
@@ -1588,13 +1603,16 @@ function endOfDay() {
 }
 
 function gainXP(amount) {
-  G.xp += amount;
+  amount = num(amount, 0);
+  G.xp = num(G.xp) + amount;
+  G.xpNeeded = Math.max(1, num(G.xpNeeded, 100));
+  G.level = num(G.level, 1);
   while(G.xp >= G.xpNeeded) {
     G.xp -= G.xpNeeded;
     G.level++;
-    G.xpNeeded = Math.floor(G.xpNeeded * 1.5);
+    G.xpNeeded = Math.max(1, Math.floor(G.xpNeeded * 1.5));
     addNotification('🎉', 'Lên cấp!', `Bạn đã đạt cấp ${G.level}!`);
-    G.money += G.level * 1000;
+    G.money = num(G.money) + G.level * 1000;
   }
 }
 
@@ -1618,10 +1636,11 @@ function generateRideRequests() {
     let from = pick(ZONES);
     let to = pick(ZONES.filter(z => z.id !== from.id));
     let distance = rand(3, 25);
-    let baseFare = distance * (from.fare + to.fare) / 2;
-    let isVIP = G.research.vip_service && Math.random() < 0.1;
+    let baseFare = distance * (num(from.fare, 1) + num(to.fare, 1)) / 2;
+    let isVIP = G.research && G.research.vip_service && Math.random() < 0.1;
     let fare = baseFare * (isVIP ? 2.5 : 1);
-    if(G.research.premium_brand) fare *= 1.3;
+    if(G.research && G.research.premium_brand) fare *= 1.3;
+    fare = Math.max(1, Math.floor(num(fare, 10)));
 
     G.rideRequests.push({
       id: uid(),
@@ -1728,27 +1747,30 @@ function processActiveRides() {
     let driver = G.drivers.find(d => d.id === ride.driverId);
     let vehicle = G.vehicles.find(v => v.id === ride.vehicleId);
 
-    let tip = ride.isVIP ? ride.fare * 0.3 : (Math.random() < 0.3 ? ride.fare * 0.1 : 0);
-    if(G.research.vip_service) tip *= 1.5;
-    let totalFare = Math.floor(ride.fare + tip);
+    let baseFare = num(ride.fare, 0);
+    let tip = ride.isVIP ? baseFare * 0.3 : (Math.random() < 0.3 ? baseFare * 0.1 : 0);
+    if(G.research && G.research.vip_service) tip *= 1.5;
+    let totalFare = Math.floor(num(baseFare + tip, 0));
 
     let fuelCost = 0;
     if(vehicle) {
       let vType = VEHICLE_TYPES.find(v => v.id === vehicle.type);
-      fuelCost = vType ? vType.fuelCost * ride.distance * 0.1 : 0;
-      if(vehicle.type === 'electric' && G.research.electric_charge) fuelCost *= 0.5;
-      vehicle.condition = clamp(vehicle.condition - rand(1,3), 0, 100);
-      vehicle.totalTrips = (vehicle.totalTrips || 0) + 1;
+      fuelCost = vType ? num(vType.fuelCost, 0) * num(ride.distance, 5) * 0.1 : 0;
+      if(vehicle.type === 'electric' && G.research && G.research.electric_charge) fuelCost *= 0.5;
+      fuelCost = num(fuelCost, 0);
+      vehicle.condition = clamp(num(vehicle.condition, 100) - rand(1,3), 0, 100);
+      vehicle.totalTrips = num(vehicle.totalTrips, 0) + 1;
     }
 
-    G.money += totalFare - fuelCost;
-    G.totalTrips++;
-    G.totalEarnings += totalFare;
-    G.dailyEarnings += totalFare;
-    G.dailyExpenses += fuelCost;
-    G.dailyTrips++;
-    G.stats.totalIncome += totalFare;
-    G.stats.totalExpense += fuelCost;
+    if(!G.stats) G.stats = {};
+    G.money = num(G.money) + totalFare - fuelCost;
+    G.totalTrips = num(G.totalTrips) + 1;
+    G.totalEarnings = num(G.totalEarnings) + totalFare;
+    G.dailyEarnings = num(G.dailyEarnings) + totalFare;
+    G.dailyExpenses = num(G.dailyExpenses) + fuelCost;
+    G.dailyTrips = num(G.dailyTrips) + 1;
+    G.stats.totalIncome = num(G.stats.totalIncome) + totalFare;
+    G.stats.totalExpense = num(G.stats.totalExpense) + fuelCost;
     G.stats.fuelSpent += fuelCost;
     G.stats.customersServed++;
 
@@ -2183,7 +2205,7 @@ function renderDashboard() {
     </div>
     <div class="stat-card rating">
       <div class="stat-icon"><i class="fas fa-star"></i></div>
-      <div class="stat-value">${G.reputation.toFixed(1)}</div>
+      <div class="stat-value">${num(G.reputation, 4).toFixed(1)}</div>
       <div class="stat-label">Đánh giá</div>
       <div class="stat-change ${G.reputation >= 4.0 ? 'up' : 'down'}">
         <i class="fas fa-star"></i> / 5.0
@@ -2292,7 +2314,7 @@ function renderCityMap() {
         <span style="font-weight:700;font-size:0.9rem;color:${z.color}">${z.name}</span>
         <span class="tag ${demand > 70 ? 'green' : demand > 40 ? 'accent' : 'red'}">${demand}%</span>
       </div>
-      <div style="font-size:0.78rem;color:var(--text-secondary)">Hệ số giá: x${z.fare.toFixed(1)}</div>
+      <div style="font-size:0.78rem;color:var(--text-secondary)">Hệ số giá: x${num(z.fare,1).toFixed(1)}</div>
       <div class="progress" style="margin-top:0.5rem">
         <div class="progress-fill ${demand > 70 ? 'green' : demand > 40 ? 'accent' : 'red'}" style="width:${demand}%"></div>
       </div>
@@ -2533,7 +2555,7 @@ function renderDispatch() {
 }
 
 function renderFinance() {
-  let net = G.stats.totalIncome - G.stats.totalExpense;
+  let net = num(G.stats?.totalIncome) - num(G.stats?.totalExpense);
   let statsHtml = `
     <div class="stat-card money">
       <div class="stat-icon"><i class="fas fa-wallet"></i></div>
@@ -2542,12 +2564,12 @@ function renderFinance() {
     </div>
     <div class="stat-card trips">
       <div class="stat-icon"><i class="fas fa-arrow-up"></i></div>
-      <div class="stat-value" style="color:var(--green)">${fmt(G.stats.totalIncome)}</div>
+      <div class="stat-value" style="color:var(--green)">${fmt(G.stats?.totalIncome)}</div>
       <div class="stat-label">Tổng thu</div>
     </div>
     <div class="stat-card fleet">
       <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
-      <div class="stat-value" style="color:var(--red)">${fmt(G.stats.totalExpense)}</div>
+      <div class="stat-value" style="color:var(--red)">${fmt(G.stats?.totalExpense)}</div>
       <div class="stat-label">Tổng chi</div>
     </div>
     <div class="stat-card rating">
@@ -2563,7 +2585,7 @@ function renderFinance() {
     <div style="display:flex;flex-direction:column;gap:0.5rem">
       <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
         <span style="font-size:0.85rem">🚕 Cước phí</span>
-        <span style="font-weight:600;color:var(--green)">${fmt(G.stats.totalIncome)}</span>
+        <span style="font-weight:600;color:var(--green)">${fmt(G.stats?.totalIncome)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
         <span style="font-size:0.85rem">📊 Kỷ lục ngày</span>
@@ -2582,19 +2604,19 @@ function renderFinance() {
     <div style="display:flex;flex-direction:column;gap:0.5rem">
       <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
         <span style="font-size:0.85rem">⛽ Nhiên liệu</span>
-        <span style="font-weight:600;color:var(--red)">${fmt(G.stats.fuelSpent)}</span>
+        <span style="font-weight:600;color:var(--red)">${fmt(G.stats?.fuelSpent)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
         <span style="font-size:0.85rem">👨‍✈️ Lương tài xế</span>
-        <span style="font-weight:600;color:var(--red)">${fmt(G.stats.driverPayments)}</span>
+        <span style="font-weight:600;color:var(--red)">${fmt(G.stats?.driverPayments)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border-glass)">
         <span style="font-size:0.85rem">🔧 Bảo trì</span>
-        <span style="font-weight:600;color:var(--red)">${fmt(G.stats.maintenanceCost)}</span>
+        <span style="font-weight:600;color:var(--red)">${fmt(G.stats?.maintenanceCost)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:0.5rem 0;">
         <span style="font-size:0.85rem">📢 Marketing</span>
-        <span style="font-weight:600;color:var(--red)">${fmt(G.stats.marketingSpent)}</span>
+        <span style="font-weight:600;color:var(--red)">${fmt(G.stats?.marketingSpent)}</span>
       </div>
     </div>
   `;
@@ -2691,7 +2713,7 @@ function renderMissions() {
       <div class="mission-progress">
         <div class="mission-progress-text">
           <span>Tiến độ</span>
-          <span>${typeof m.progress === 'number' ? (m.type === 'rep' ? m.progress.toFixed(1) : Math.floor(m.progress)) : 0} / ${m.type === 'rep' ? m.target.toFixed(1) : m.target}</span>
+          <span>${typeof m.progress === 'number' ? (m.type === 'rep' ? num(m.progress).toFixed(1) : Math.floor(num(m.progress))) : 0} / ${m.type === 'rep' ? num(m.target).toFixed(1) : m.target}</span>
         </div>
         <div class="progress"><div class="progress-fill ${m.completed ? 'green' : 'accent'}" style="width:${pct}%"></div></div>
       </div>
@@ -2703,7 +2725,7 @@ function renderMissions() {
 
 function renderResearch() {
   let html = '';
-  document.getElementById('research-points').textContent = G.stats.researchPoints || 0;
+  document.getElementById('research-points').textContent = num(G.stats?.researchPoints);
 
   RESEARCH_TREE.forEach(r => {
     let unlocked = G.research[r.id];
@@ -2753,7 +2775,7 @@ function renderMarketing() {
   let statsHtml = `<div style="display:flex;gap:1rem;flex-wrap:wrap">
     <div style="flex:1;min-width:200px">
       <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.3rem">Tổng chi marketing</div>
-      <div style="font-size:1.3rem;font-weight:700;color:var(--accent)">${fmt(G.stats.marketingSpent)}</div>
+      <div style="font-size:1.3rem;font-weight:700;color:var(--accent)">${fmt(G.stats?.marketingSpent)}</div>
     </div>
     <div style="flex:1;min-width:200px">
       <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.3rem">Chiến dịch đang chạy</div>
@@ -2792,12 +2814,14 @@ function renderNotifications() {
 
 // === UI FUNCTIONS ===
 function updateHeaderUI() {
-  document.getElementById('header-money').textContent = fmt(G.money);
-  document.getElementById('header-rep').textContent = G.reputation.toFixed(1);
-  document.getElementById('header-day').textContent = G.day;
-  document.getElementById('level-badge').textContent = 'LV ' + G.level;
-  document.getElementById('xp-fill').style.width = (G.xp / G.xpNeeded * 100) + '%';
-  document.getElementById('company-name-display').textContent = G.companyName;
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  set('header-money', fmt(G.money));
+  set('header-rep', num(G.reputation, 4).toFixed(1));
+  set('header-day', String(num(G.day, 1)));
+  set('level-badge', 'LV ' + num(G.level, 1));
+  const xpEl = document.getElementById('xp-fill');
+  if(xpEl) xpEl.style.width = (num(G.xpNeeded, 100) > 0 ? (num(G.xp)/num(G.xpNeeded,100)*100) : 0) + '%';
+  set('company-name-display', G.companyName || 'Taxi Empire');
 
   let timeStr = `${String(G.hour).padStart(2,'0')}:${String(G.minute).padStart(2,'0')}`;
   document.getElementById('time-display').textContent = timeStr;
@@ -2927,30 +2951,78 @@ function refreshDriverPool() {
 
 // === SAVE/LOAD ===
 function migrateGameData(data) {
-  G = data;
-  if(!G.stats) G.stats = {totalIncome:0,totalExpense:0,tripsToday:0,bestDay:0,customersServed:0,fuelSpent:0,maintenanceCost:0,driverPayments:0,marketingSpent:0,researchPoints:0};
-  if(G.stats.researchPoints == null) G.stats.researchPoints = 0;
+  G = data || {};
+  // Core numbers
+  G.money = num(G.money, 50000);
+  G.reputation = clamp(num(G.reputation, 4), 1, 5);
+  G.level = Math.max(1, Math.floor(num(G.level, 1)));
+  G.xp = num(G.xp, 0);
+  G.xpNeeded = Math.max(1, num(G.xpNeeded, 100));
+  G.day = Math.max(1, Math.floor(num(G.day, 1)));
+  G.hour = clamp(Math.floor(num(G.hour, 6)), 0, 23);
+  G.minute = clamp(Math.floor(num(G.minute, 0)), 0, 59);
+  G.speed = [0,1,2,3].includes(G.speed) ? G.speed : 1;
+  G.totalTrips = num(G.totalTrips, 0);
+  G.totalEarnings = num(G.totalEarnings, 0);
+  G.dailyEarnings = num(G.dailyEarnings, 0);
+  G.dailyExpenses = num(G.dailyExpenses, 0);
+  G.dailyTrips = num(G.dailyTrips, 0);
+  G.garageSlots = Math.max(1, num(G.garageSlots, 5));
+  G.companyName = G.companyName || 'Taxi Empire';
+  G.weather = G.weather || 'sunny';
+  G.insurance = !!G.insurance;
+  G.dailyBonusStreak = num(G.dailyBonusStreak, 0);
+
+  if(!G.stats || typeof G.stats !== 'object') G.stats = {};
+  ['totalIncome','totalExpense','tripsToday','bestDay','customersServed','fuelSpent','maintenanceCost','driverPayments','marketingSpent','researchPoints'].forEach(k => {
+    G.stats[k] = num(G.stats[k], 0);
+  });
+
+  if(!Array.isArray(G.revenueHistory)) G.revenueHistory = [0,0,0,0,0,0,0];
+  G.revenueHistory = G.revenueHistory.map(x => num(x, 0));
   if(!G.marketingActive) G.marketingActive = {};
-  if(!G.loans) G.loans = [];
-  if(!G.contracts) G.contracts = [];
-  if(!G.activeContracts) G.activeContracts = [];
-  if(!G.vehicles) G.vehicles = G.fleet || [];
-  if(!G.drivers) G.drivers = [];
-  if(!G.driverPool) G.driverPool = [];
-  if(!G.rideRequests) G.rideRequests = [];
-  if(!G.activeRides) G.activeRides = [];
-  if(!G.missions) generateMissions();
-  if(!G.research) G.research = {};
-  if(!G.achievements) G.achievements = {};
-  if(!G.notifications) G.notifications = [];
-  if(G.garageSlots == null) G.garageSlots = 5;
-  if(G.insurance == null) G.insurance = false;
-  if(G.dailyBonusStreak == null) G.dailyBonusStreak = 0;
-  // Ensure drivers have required fields
+  if(!Array.isArray(G.loans)) G.loans = [];
+  if(!Array.isArray(G.contracts)) G.contracts = [];
+  if(!Array.isArray(G.activeContracts)) G.activeContracts = [];
+  if(!Array.isArray(G.vehicles)) G.vehicles = G.fleet || [];
+  if(!Array.isArray(G.drivers)) G.drivers = [];
+  if(!Array.isArray(G.driverPool)) G.driverPool = [];
+  if(!Array.isArray(G.rideRequests)) G.rideRequests = [];
+  if(!Array.isArray(G.activeRides)) G.activeRides = [];
+  if(!Array.isArray(G.missions)) generateMissions();
+  if(!G.research || typeof G.research !== 'object') G.research = {};
+  if(!G.achievements || typeof G.achievements !== 'object') G.achievements = {};
+  if(!Array.isArray(G.notifications)) G.notifications = [];
+
+  G.vehicles.forEach(v => {
+    v.condition = clamp(num(v.condition, 100), 0, 100);
+    v.totalTrips = num(v.totalTrips, 0);
+    v.level = num(v.level, 1);
+  });
   G.drivers.forEach(d => {
-    if(d.onRide == null) d.onRide = false;
-    if(d.tripsCompleted == null) d.tripsCompleted = 0;
-    if(d.earnings == null) d.earnings = 0;
+    d.onRide = !!d.onRide;
+    d.skill = clamp(num(d.skill, 50), 0, 100);
+    d.experience = clamp(num(d.experience, 0), 0, 100);
+    d.salary = num(d.salary, 100);
+    d.tripsCompleted = num(d.tripsCompleted, 0);
+    d.earnings = num(d.earnings, 0);
+    if(d.assigned === undefined) d.assigned = null;
+  });
+  G.rideRequests.forEach(r => {
+    r.fare = num(r.fare, 10);
+    r.distance = num(r.distance, 5);
+    r.patience = num(r.patience, 30);
+  });
+  G.activeRides.forEach(r => {
+    r.fare = num(r.fare, 10);
+    r.distance = num(r.distance, 5);
+    r.progress = num(r.progress, 0);
+    r.duration = Math.max(1, num(r.duration, 5));
+  });
+  G.loans.forEach(l => {
+    l.amount = num(l.amount, 0);
+    l.rate = num(l.rate, 0.05);
+    l.daysLeft = num(l.daysLeft, 30);
   });
   initResearch();
 }
