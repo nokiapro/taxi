@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<script>
+(function(){try{var m=localStorage.getItem('tx-theme');if(m==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark');}}catch(e){}})();
+</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Taxi Xanh" />
+  <meta name="application-name" content="Taxi Xanh" />
+  <meta name="description" content="Taxi Xanh — Quản lý đội xe, điều phối chuyến, mở rộng doanh nghiệp taxi." />
+  <title>Taxi Xanh - Quản lý Đội Xe</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/style.css?v=2.0.0" />
+  <link rel="stylesheet" href="css/taxi.css?v=2.0.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://kit-pro.fontawesome.com/releases/v7.3.1/css/pro.min.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <div class="liquid-bg background" aria-hidden="true">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div id="auth-loading" class="auth-loading">
+    <div class="auth-loading-card">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <p>Đang khôi phục phiên đăng nhập...</p>
+    </div>
+  </div>
+
+  <div id="login-screen" class="login-screen" style="display:none">
+    <div class="login-card">
+      <div class="login-logo"><i class="fa-duotone fa-taxi"></i></div>
+      <h1>Taxi Xanh</h1>
+      <p>Đăng nhập để quản lý đội xe của bạn</p>
+      <div class="input-group">
+        <i class="fa-solid fa-envelope"></i>
+        <input type="email" id="login-email" placeholder="Email" autocomplete="email" />
+      </div>
+      <div class="input-group">
+        <i class="fa-solid fa-lock"></i>
+        <input type="password" id="login-password" placeholder="Mật khẩu" autocomplete="current-password" />
+      </div>
+      <button id="btn-login" class="btn btn-primary btn-block">
+        <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập
+      </button>
+      <p id="login-error" class="login-error"></p>
+      <p class="login-hint">Tài khoản do Admin tạo trong Firebase Console.<br>Không có đăng ký trên web.</p>
+    </div>
+  </div>
+
+  <div id="app-screen" style="display:none">
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon"><i class="fa-duotone fa-taxi"></i></span>
+        <span>Taxi Xanh</span>
+        <span id="app-version-badge" class="app-version-badge">v2.0</span>
+      </div>
+      <div class="user-info">
+        <div class="level-badge" id="level-badge" title="Cấp công ty">
+          <i class="fa-solid fa-star"></i> <span id="level-display">1</span>
+        </div>
+        <div class="coins">
+          <i class="fa-solid fa-coins"></i>
+          <span id="coin-display">0</span>
+        </div>
+        <button id="btn-theme" class="btn-icon" title="Đổi giao diện" aria-label="Theme">
+          <i class="fa-solid fa-moon" id="theme-icon"></i>
+        </button>
+      </div>
+    </header>
+
+    <nav id="bottom-nav" class="bottom-nav" aria-label="Điều hướng chính">
+      <div class="nav-dock">
+        <button class="nav-btn active" data-page="fleet"><i class="fa-solid fa-taxi"></i><span>Đội xe</span></button>
+        <button class="nav-btn" data-page="shop"><i class="fa-solid fa-bag-shopping"></i><span>Cửa hàng</span></button>
+        <button class="nav-btn" data-page="inventory"><i class="fa-solid fa-gas-pump"></i><span>Kho</span></button>
+        <button class="nav-btn" data-page="company"><i class="fa-solid fa-building"></i><span>Công ty</span></button>
+        <button class="nav-btn" data-page="profile"><i class="fa-solid fa-user"></i><span>Tôi</span></button>
+      </div>
+    </nav>
+
+    <main id="main-content" class="main-content">
+      <!-- ĐỘI XE -->
+      <section id="page-fleet" class="page active">
+        <div class="page-header">
+          <div>
+            <h1><i class="fa-duotone fa-taxi"></i> ĐỘI XE</h1>
+            <p class="page-sub" id="company-name-display">Đội Xe Xanh</p>
+          </div>
+          <button id="btn-daily" class="btn btn-warning">
+            <i class="fa-solid fa-gift"></i> Thưởng ngày
+          </button>
+        </div>
+
+        <div class="fleet-controls">
+          <div class="event-bar">
+            <span id="weather-icon"><i class="fa-solid fa-sun"></i></span>
+            <span id="weather-text">Thời tiết đẹp</span>
+          </div>
+          <div class="fleet-actions">
+            <button id="btn-complete-all" class="btn btn-primary btn-sm">
+              <i class="fa-solid fa-check-double"></i> Nhận tất cả
+            </button>
+            <button id="btn-auto-dispatch" class="btn btn-secondary btn-sm">
+              <i class="fa-solid fa-robot"></i> Tự điều phối
+            </button>
+          </div>
+        </div>
+
+        <div id="fleet-grid" class="fleet-grid garden-grid"></div>
+      </section>
+
+      <!-- CỬA HÀNG -->
+      <section id="page-shop" class="page">
+        <div class="page-header">
+          <h1><i class="fa-solid fa-bag-shopping"></i> CỬA HÀNG</h1>
+        </div>
+        <div class="shop-tabs">
+          <button class="shop-tab active" data-shop="vehicles"><i class="fa-solid fa-car"></i> Xe</button>
+          <button class="shop-tab" data-shop="drivers"><i class="fa-solid fa-id-card"></i> Tài xế</button>
+          <button class="shop-tab" data-shop="fuel"><i class="fa-solid fa-gas-pump"></i> Nhiên liệu</button>
+          <button class="shop-tab" data-shop="maintenance"><i class="fa-solid fa-wrench"></i> Bảo dưỡng</button>
+          <button class="shop-tab" data-shop="upgrades"><i class="fa-solid fa-arrow-up"></i> Nâng cấp</button>
+        </div>
+        <div id="shop-grid" class="shop-grid"></div>
+      </section>
+
+      <!-- KHO -->
+      <section id="page-inventory" class="page">
+        <div class="page-header">
+          <h1><i class="fa-solid fa-warehouse"></i> KHO HÀNG</h1>
+        </div>
+        <div class="inventory-tabs">
+          <button class="tab-btn active" data-tab="fuels"><i class="fa-solid fa-gas-pump"></i> Nhiên liệu</button>
+          <button class="tab-btn" data-tab="maintenance"><i class="fa-solid fa-wrench"></i> Bảo dưỡng</button>
+          <button class="tab-btn" data-tab="drivers"><i class="fa-solid fa-id-card"></i> Tài xế</button>
+        </div>
+        <div id="inventory-content" class="inventory-content"></div>
+      </section>
+
+      <!-- CÔNG TY -->
+      <section id="page-company" class="page">
+        <div class="page-header">
+          <h1><i class="fa-solid fa-building"></i> CÔNG TY</h1>
+        </div>
+        <div id="company-panel" class="company-panel"></div>
+      </section>
+
+      <!-- HỒ SƠ -->
+      <section id="page-profile" class="page">
+        <div class="page-header">
+          <h1><i class="fa-solid fa-user"></i> HỒ SƠ</h1>
+        </div>
+        <div id="profile-panel" class="profile-panel"></div>
+        <div class="profile-actions">
+          <button id="btn-admin" class="btn btn-secondary" style="display:none">
+            <i class="fa-solid fa-gear"></i> Admin
+          </button>
+          <button id="btn-reset-data" class="btn btn-danger">
+            <i class="fa-solid fa-trash"></i> Reset dữ liệu
+          </button>
+          <button id="btn-logout" class="btn btn-secondary">
+            <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="modal-root"></div>
+
+  <script src="js/firebase-config.js?v=2.0.0"></script>
+  <script src="js/data.js?v=2.0.0"></script>
+  <script src="js/game.js?v=2.0.0"></script>
+  <script src="js/app.js?v=2.0.0"></script>
+  <script>
+  (function () {
+    if (!('serviceWorker' in navigator)) return;
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function (err) {
+        console.warn('SW register failed', err);
+      });
+    });
+  })();
+  </script>
+</body>
+</html>
